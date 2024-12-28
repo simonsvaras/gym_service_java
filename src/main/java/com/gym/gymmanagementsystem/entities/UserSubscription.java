@@ -22,8 +22,9 @@ public class UserSubscription {
     @JoinColumn(name = "UserID", nullable = false)
     private User user;
 
-    @Column(name = "SubscriptionID", nullable = false)
-    private Integer subscriptionID;
+    @ManyToOne
+    @JoinColumn(name = "SubscriptionID", nullable = false)
+    private Subscription subscription;
 
     private LocalDate startDate;
     private LocalDate endDate;
