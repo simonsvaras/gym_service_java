@@ -1,19 +1,23 @@
 package com.gym.gymmanagementsystem.controllers;
 
-
+import com.gym.gymmanagementsystem.dto.EntryHistoryDto;
+import com.gym.gymmanagementsystem.dto.mappers.EntryHistoryMapper;
 import com.gym.gymmanagementsystem.entities.EntryHistory;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.EntryHistoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/entry-history")
 public class EntryHistoryController {
 
     private final EntryHistoryService entryHistoryService;
+    private final EntryHistoryMapper mapper = EntryHistoryMapper.INSTANCE;
 
     public EntryHistoryController(EntryHistoryService entryHistoryService) {
         this.entryHistoryService = entryHistoryService;
@@ -21,32 +25,40 @@ public class EntryHistoryController {
 
     // GET /api/entry-history
     @GetMapping
-    public ResponseEntity<List<EntryHistory>> getAllEntryHistories() {
+    public ResponseEntity<List<EntryHistoryDto>> getAllEntryHistories() {
         List<EntryHistory> histories = entryHistoryService.getAllEntryHistories();
-        return ResponseEntity.ok(histories);
+        List<EntryHistoryDto> historyDtos = histories.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(historyDtos);
     }
 
     // GET /api/entry-history/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<EntryHistory> getEntryHistoryById(@PathVariable Integer id) {
+    public ResponseEntity<EntryHistoryDto> getEntryHistoryById(@PathVariable Integer id) {
         EntryHistory history = entryHistoryService.getEntryHistoryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("EntryHistory not found with id " + id));
-        return ResponseEntity.ok(history);
+        EntryHistoryDto dto = mapper.toDto(history);
+        return ResponseEntity.ok(dto);
     }
 
     // POST /api/entry-history
     @PostMapping
-    public ResponseEntity<EntryHistory> createEntryHistory(@RequestBody EntryHistory entryHistory) {
+    public ResponseEntity<EntryHistoryDto> createEntryHistory(@Valid @RequestBody EntryHistoryDto entryHistoryDto) {
+        EntryHistory entryHistory = mapper.toEntity(entryHistoryDto);
         EntryHistory created = entryHistoryService.createEntryHistory(entryHistory);
-        return ResponseEntity.ok(created);
+        EntryHistoryDto createdDto = mapper.toDto(created);
+        return ResponseEntity.ok(createdDto);
     }
 
     // PUT /api/entry-history/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<EntryHistory> updateEntryHistory(@PathVariable Integer id,
-                                                           @RequestBody EntryHistory entryHistoryDetails) {
+    public ResponseEntity<EntryHistoryDto> updateEntryHistory(@PathVariable Integer id,
+                                                              @Valid @RequestBody EntryHistoryDto entryHistoryDto) {
+        EntryHistory entryHistoryDetails = mapper.toEntity(entryHistoryDto);
         EntryHistory updated = entryHistoryService.updateEntryHistory(id, entryHistoryDetails);
-        return ResponseEntity.ok(updated);
+        EntryHistoryDto updatedDto = mapper.toDto(updated);
+        return ResponseEntity.ok(updatedDto);
     }
 
     // DELETE /api/entry-history/{id}
@@ -58,9 +70,12 @@ public class EntryHistoryController {
 
     // Speciální příklad: GET /api/entry-history/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<EntryHistory>> findByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<EntryHistoryDto>> findByUserId(@PathVariable Integer userId) {
         List<EntryHistory> results = entryHistoryService.findByUserId(userId);
-        return ResponseEntity.ok(results);
+        List<EntryHistoryDto> resultDtos = results.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resultDtos);
     }
 
 }

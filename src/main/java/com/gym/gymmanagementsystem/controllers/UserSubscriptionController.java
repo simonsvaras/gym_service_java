@@ -1,18 +1,23 @@
 package com.gym.gymmanagementsystem.controllers;
 
+import com.gym.gymmanagementsystem.dto.UserSubscriptionDto;
+import com.gym.gymmanagementsystem.dto.mappers.UserSubscriptionMapper;
 import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.UserSubscriptionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/user-subscriptions")
 public class UserSubscriptionController {
 
     private final UserSubscriptionService userSubscriptionService;
+    private final UserSubscriptionMapper mapper = UserSubscriptionMapper.INSTANCE;
 
     public UserSubscriptionController(UserSubscriptionService userSubscriptionService) {
         this.userSubscriptionService = userSubscriptionService;
@@ -20,32 +25,40 @@ public class UserSubscriptionController {
 
     // GET /api/user-subscriptions
     @GetMapping
-    public ResponseEntity<List<UserSubscription>> getAllUserSubscriptions() {
+    public ResponseEntity<List<UserSubscriptionDto>> getAllUserSubscriptions() {
         List<UserSubscription> subscriptions = userSubscriptionService.getAllUserSubscriptions();
-        return ResponseEntity.ok(subscriptions);
+        List<UserSubscriptionDto> subscriptionDtos = subscriptions.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(subscriptionDtos);
     }
 
     // GET /api/user-subscriptions/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<UserSubscription> getUserSubscriptionById(@PathVariable Integer id) {
+    public ResponseEntity<UserSubscriptionDto> getUserSubscriptionById(@PathVariable Integer id) {
         UserSubscription userSubscription = userSubscriptionService.getUserSubscriptionById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UserSubscription not found with id " + id));
-        return ResponseEntity.ok(userSubscription);
+        UserSubscriptionDto dto = mapper.toDto(userSubscription);
+        return ResponseEntity.ok(dto);
     }
 
     // POST /api/user-subscriptions
     @PostMapping
-    public ResponseEntity<UserSubscription> createUserSubscription(@RequestBody UserSubscription userSubscription) {
+    public ResponseEntity<UserSubscriptionDto> createUserSubscription(@Valid @RequestBody UserSubscriptionDto userSubscriptionDto) {
+        UserSubscription userSubscription = mapper.toEntity(userSubscriptionDto);
         UserSubscription created = userSubscriptionService.createUserSubscription(userSubscription);
-        return ResponseEntity.ok(created);
+        UserSubscriptionDto createdDto = mapper.toDto(created);
+        return ResponseEntity.ok(createdDto);
     }
 
     // PUT /api/user-subscriptions/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<UserSubscription> updateUserSubscription(@PathVariable Integer id,
-                                                                   @RequestBody UserSubscription userSubscriptionDetails) {
+    public ResponseEntity<UserSubscriptionDto> updateUserSubscription(@PathVariable Integer id,
+                                                                      @Valid @RequestBody UserSubscriptionDto userSubscriptionDto) {
+        UserSubscription userSubscriptionDetails = mapper.toEntity(userSubscriptionDto);
         UserSubscription updated = userSubscriptionService.updateUserSubscription(id, userSubscriptionDetails);
-        return ResponseEntity.ok(updated);
+        UserSubscriptionDto updatedDto = mapper.toDto(updated);
+        return ResponseEntity.ok(updatedDto);
     }
 
     // DELETE /api/user-subscriptions/{id}
@@ -57,15 +70,21 @@ public class UserSubscriptionController {
 
     // Speciální příklad: GET /api/user-subscriptions/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<UserSubscription>> findByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<UserSubscriptionDto>> findByUserId(@PathVariable Integer userId) {
         List<UserSubscription> subscriptions = userSubscriptionService.findByUserId(userId);
-        return ResponseEntity.ok(subscriptions);
+        List<UserSubscriptionDto> subscriptionDtos = subscriptions.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(subscriptionDtos);
     }
 
     // Další speciální příklad: GET /api/user-subscriptions/active
     @GetMapping("/active")
-    public ResponseEntity<List<UserSubscription>> findActiveSubscriptions() {
+    public ResponseEntity<List<UserSubscriptionDto>> findActiveSubscriptions() {
         List<UserSubscription> activeSubs = userSubscriptionService.findActiveSubscriptions();
-        return ResponseEntity.ok(activeSubs);
+        List<UserSubscriptionDto> subscriptionDtos = activeSubs.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(subscriptionDtos);
     }
 }

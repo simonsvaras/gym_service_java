@@ -1,19 +1,23 @@
 package com.gym.gymmanagementsystem.controllers;
 
-
+import com.gym.gymmanagementsystem.dto.TransactionHistoryDto;
+import com.gym.gymmanagementsystem.dto.mappers.TransactionHistoryMapper;
 import com.gym.gymmanagementsystem.entities.TransactionHistory;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.TransactionHistoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/transaction-history")
 public class TransactionHistoryController {
 
     private final TransactionHistoryService transactionHistoryService;
+    private final TransactionHistoryMapper mapper = TransactionHistoryMapper.INSTANCE;
 
     public TransactionHistoryController(TransactionHistoryService transactionHistoryService) {
         this.transactionHistoryService = transactionHistoryService;
@@ -21,32 +25,40 @@ public class TransactionHistoryController {
 
     // GET /api/transaction-history
     @GetMapping
-    public ResponseEntity<List<TransactionHistory>> getAllTransactionHistories() {
+    public ResponseEntity<List<TransactionHistoryDto>> getAllTransactionHistories() {
         List<TransactionHistory> histories = transactionHistoryService.getAllTransactionHistories();
-        return ResponseEntity.ok(histories);
+        List<TransactionHistoryDto> historyDtos = histories.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(historyDtos);
     }
 
     // GET /api/transaction-history/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionHistory> getTransactionHistoryById(@PathVariable Integer id) {
+    public ResponseEntity<TransactionHistoryDto> getTransactionHistoryById(@PathVariable Integer id) {
         TransactionHistory history = transactionHistoryService.getTransactionHistoryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TransactionHistory not found with id " + id));
-        return ResponseEntity.ok(history);
+        TransactionHistoryDto dto = mapper.toDto(history);
+        return ResponseEntity.ok(dto);
     }
 
     // POST /api/transaction-history
     @PostMapping
-    public ResponseEntity<TransactionHistory> createTransactionHistory(@RequestBody TransactionHistory transactionHistory) {
+    public ResponseEntity<TransactionHistoryDto> createTransactionHistory(@Valid @RequestBody TransactionHistoryDto transactionHistoryDto) {
+        TransactionHistory transactionHistory = mapper.toEntity(transactionHistoryDto);
         TransactionHistory created = transactionHistoryService.createTransactionHistory(transactionHistory);
-        return ResponseEntity.ok(created);
+        TransactionHistoryDto createdDto = mapper.toDto(created);
+        return ResponseEntity.ok(createdDto);
     }
 
     // PUT /api/transaction-history/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<TransactionHistory> updateTransactionHistory(@PathVariable Integer id,
-                                                                       @RequestBody TransactionHistory transactionHistoryDetails) {
+    public ResponseEntity<TransactionHistoryDto> updateTransactionHistory(@PathVariable Integer id,
+                                                                          @Valid @RequestBody TransactionHistoryDto transactionHistoryDto) {
+        TransactionHistory transactionHistoryDetails = mapper.toEntity(transactionHistoryDto);
         TransactionHistory updated = transactionHistoryService.updateTransactionHistory(id, transactionHistoryDetails);
-        return ResponseEntity.ok(updated);
+        TransactionHistoryDto updatedDto = mapper.toDto(updated);
+        return ResponseEntity.ok(updatedDto);
     }
 
     // DELETE /api/transaction-history/{id}
@@ -58,15 +70,21 @@ public class TransactionHistoryController {
 
     // Speciální příklad: GET /api/transaction-history/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TransactionHistory>> findByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<TransactionHistoryDto>> findByUserId(@PathVariable Integer userId) {
         List<TransactionHistory> results = transactionHistoryService.findByUserId(userId);
-        return ResponseEntity.ok(results);
+        List<TransactionHistoryDto> resultDtos = results.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resultDtos);
     }
 
     // Speciální příklad: GET /api/transaction-history/purchaseType/{purchaseType}
     @GetMapping("/purchaseType/{purchaseType}")
-    public ResponseEntity<List<TransactionHistory>> findByPurchaseType(@PathVariable String purchaseType) {
+    public ResponseEntity<List<TransactionHistoryDto>> findByPurchaseType(@PathVariable String purchaseType) {
         List<TransactionHistory> results = transactionHistoryService.findByPurchaseType(purchaseType);
-        return ResponseEntity.ok(results);
+        List<TransactionHistoryDto> resultDtos = results.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resultDtos);
     }
 }
