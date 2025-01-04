@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class UserSubscriptionController {
 
     private final UserSubscriptionService userSubscriptionService;
-    private final UserSubscriptionMapper mapper = UserSubscriptionMapper.INSTANCE;
+    private UserSubscriptionMapper mapper;
 
     public UserSubscriptionController(UserSubscriptionService userSubscriptionService) {
         this.userSubscriptionService = userSubscriptionService;

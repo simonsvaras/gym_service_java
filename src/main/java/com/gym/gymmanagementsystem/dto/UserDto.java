@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -24,10 +25,11 @@ public class UserDto {
     @Email(message = "Neplatný formát emailu")
     private String email;
 
-    @NotBlank(message = "Password je povinný")
+
     @Size(min = 6, message = "Password musí mít alespoň 6 znaků")
     private String password;
 
+    @NotNull(message = "Birthdate je povinné")
     private LocalDate birthdate;
 
     @Size(max = 200, message = "Profile photo může mít maximálně 200 znaků")

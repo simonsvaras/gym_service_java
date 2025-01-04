@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class OneTimeEntryController {
 
     private final OneTimeEntryService oneTimeEntryService;
-    private final OneTimeEntryMapper mapper = OneTimeEntryMapper.INSTANCE;
+    private OneTimeEntryMapper mapper;
 
     public OneTimeEntryController(OneTimeEntryService oneTimeEntryService) {
         this.oneTimeEntryService = oneTimeEntryService;

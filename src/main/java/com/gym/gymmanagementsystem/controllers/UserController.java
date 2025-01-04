@@ -5,6 +5,7 @@ import com.gym.gymmanagementsystem.dto.mappers.UserMapper;
 import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +18,9 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserService userService;
-    private final UserMapper mapper = UserMapper.INSTANCE;
 
+    @Autowired
+    private UserMapper mapper;
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -45,6 +47,8 @@ public class UserController {
     // POST /api/users
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
+        System.out.println("Received UserDto: " + userDto);
+
         User user = mapper.toEntity(userDto);
         User createdUser = userService.createUser(user);
         UserDto createdDto = mapper.toDto(createdUser);

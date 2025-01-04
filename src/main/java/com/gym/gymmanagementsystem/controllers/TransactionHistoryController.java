@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class TransactionHistoryController {
 
     private final TransactionHistoryService transactionHistoryService;
-    private final TransactionHistoryMapper mapper = TransactionHistoryMapper.INSTANCE;
+    private TransactionHistoryMapper mapper;
 
     public TransactionHistoryController(TransactionHistoryService transactionHistoryService) {
         this.transactionHistoryService = transactionHistoryService;

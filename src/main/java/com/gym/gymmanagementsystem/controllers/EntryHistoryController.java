@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class EntryHistoryController {
 
     private final EntryHistoryService entryHistoryService;
-    private final EntryHistoryMapper mapper = EntryHistoryMapper.INSTANCE;
+    private EntryHistoryMapper mapper;
 
     public EntryHistoryController(EntryHistoryService entryHistoryService) {
         this.entryHistoryService = entryHistoryService;

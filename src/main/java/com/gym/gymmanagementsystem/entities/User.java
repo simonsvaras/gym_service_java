@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,18 +19,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userID;
 
-    @Column(length = 50, nullable = false)
+    @Column(name="firstname",length = 50, nullable = false)
     private String firstname;
 
-    @Column(length = 50, nullable = false)
+    @Column(name="lastname",length = 50, nullable = false)
     private String lastname;
 
-    @Column(length = 100, unique = true, nullable = false)
+    @Column(name="email", length = 100, unique = true, nullable = false)
     private String email;
 
     @Column(length = 255)
     private String password;
 
+    @Column(name = "birthdate")
     private LocalDate birthdate;
 
     @Column(length = 200)
@@ -46,9 +47,10 @@ public class User {
     @JoinColumn(name = "ID_Subscription", unique = true)
     private UserSubscription activeSubscription;
 
+    @Column(name="realuser")
     private Boolean realUser = true;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "createdat", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Vztahy

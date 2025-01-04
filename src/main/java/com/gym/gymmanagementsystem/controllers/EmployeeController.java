@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-    private final EmployeeMapper mapper = EmployeeMapper.INSTANCE;
+    private EmployeeMapper mapper;
 
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;

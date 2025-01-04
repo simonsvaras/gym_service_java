@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class CardController {
 
     private final CardService cardService;
-    private final CardMapper mapper = CardMapper.INSTANCE;
+    private CardMapper mapper;
 
     public CardController(CardService cardService) {
         this.cardService = cardService;
