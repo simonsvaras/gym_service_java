@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.services;
 
 
 import com.gym.gymmanagementsystem.entities.User;
+import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
-        // Případná validace nebo další logika
+        // Kontrola, zda už e-mail existuje
+        Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
+        if (existingUser.isPresent()) {
+            throw new ResourceAlreadyExistsException("User with email " + user.getEmail() + " already exists");
+        }
         return userRepository.save(user);
     }
 

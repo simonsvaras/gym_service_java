@@ -1,6 +1,7 @@
 package com.gym.gymmanagementsystem.exceptions;
 
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -38,7 +39,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
-    // 3) Obecné chyby -> 500
+    // 3) ResourceAlreadyExistsException -> 409
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleResourceAlreadyExists(ResourceAlreadyExistsException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", ex.getMessage());
+        // 409 Conflict značí konflikt v datech (duplicitní unikátní hodnota)
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+
+    // Obecné chyby -> 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
         Map<String, String> errorBody = new HashMap<>();
