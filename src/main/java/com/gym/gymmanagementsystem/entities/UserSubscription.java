@@ -8,13 +8,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "UserSubscriptions")
+@Table(name = "Usersubscriptions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSubscription {
 
     @Id
+    @Column(name = "usersubscriptionid")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userSubscriptionID;
 
@@ -26,9 +27,12 @@ public class UserSubscription {
     @JoinColumn(name = "SubscriptionID", nullable = false)
     private Subscription subscription;
 
+    @Column(name = "startdate")
     private LocalDate startDate;
+    @Column(name = "enddate")
     private LocalDate endDate;
 
+    @Column(name = "isactive")
     private Boolean isActive = false;
 
     // Vztah s TransactionHistory

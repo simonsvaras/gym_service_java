@@ -18,13 +18,13 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer subscriptionID;
 
-    @Column(length = 50, nullable = false)
+    @Column(name = "subscriptiontype",length = 50, nullable = false)
     private String subscriptionType;
 
-    @Column(nullable = false)
+    @Column(name = "durationmonths",nullable = false)
     private Integer durationMonths;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "price",nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     // Vztah s UserSubscription

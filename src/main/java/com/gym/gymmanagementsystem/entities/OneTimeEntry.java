@@ -18,10 +18,10 @@ public class OneTimeEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer oneTimeEntryID;
 
-    @Column(length = 50)
+    @Column(name = "entryname",length = 50)
     private String entryName;
 
-    @Column(precision = 10, scale = 2)
+    @Column(name = "price", precision = 10, scale = 2)
     private BigDecimal price;
 
     // Vztah s UserOneTimeEntry

@@ -26,8 +26,10 @@ public class UserOneTimeEntry {
     @JoinColumn(name = "OneTimeEntryID", nullable = false)
     private OneTimeEntry oneTimeEntry;
 
+    @Column(name = "purchasedate")
     private LocalDate purchaseDate;
 
+    @Column(name = "isused")
     private Boolean isUsed = false;
 
     // Vztah s TransactionHistory
