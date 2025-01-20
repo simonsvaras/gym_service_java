@@ -6,10 +6,18 @@ import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -17,6 +25,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+    @Value("${upload.profile-photos}")
+    private String uploadDir;
 
     @Override
     public List<User> getAllUsers() {
@@ -33,7 +43,7 @@ public class UserServiceImpl implements UserService {
         // Kontrola, zda už e-mail existuje
         Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
         if (existingUser.isPresent()) {
-            throw new ResourceAlreadyExistsException("User with email " + user.getEmail() + " already exists");
+            throw new ResourceAlreadyExistsException("Uživatel s emailem " + user.getEmail() + " již existuje");
         }
         return userRepository.save(user);
     }
@@ -64,5 +74,47 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public String uploadProfilePicture(Integer userId, MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Soubor je prázdný.");
+        }
+
+        try {
+            // 1) Zajistit existenci složky
+            Path uploadPath = Paths.get(uploadDir);
+            Files.createDirectories(uploadPath);
+
+            // 2) Vygenerovat unikátní název souboru
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String uniqueFilename = UUID.randomUUID().toString() + extension;
+
+            // 3) Složit výslednou cestu
+            Path destinationPath = uploadPath.resolve(uniqueFilename);
+
+            // 4) Uložit soubor na disk
+            file.transferTo(destinationPath.toFile());
+
+            // 5) Do DB (sloupec profilePhoto) uložit **relativní** cestu (nebo jen název souboru)
+            //    - lze uložit i plnou absolutní cestu, ale většinou stačí relativní cesta + prefix
+            //    - např.: /profile-photos/<uniqueFilename> pokud se následně servíruje
+            //      přes konfigurovaný statický mapping
+            user.setProfilePhoto(uniqueFilename);
+            userRepository.save(user);
+
+            return uniqueFilename; // nebo "profile-photos/" + uniqueFilename
+
+        } catch (IOException e) {
+            throw new RuntimeException("Chyba při ukládání souboru: " + e.getMessage(), e);
+        }
     }
 }

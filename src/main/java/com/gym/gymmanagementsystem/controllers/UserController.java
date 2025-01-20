@@ -6,11 +6,16 @@ import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -46,13 +51,17 @@ public class UserController {
 
     // POST /api/users
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<Map<String, Object>>createUser(@Valid @RequestBody UserDto userDto) {
         System.out.println("Received UserDto: " + userDto);
 
         User user = mapper.toEntity(userDto);
         User createdUser = userService.createUser(user);
-        UserDto createdDto = mapper.toDto(createdUser);
-        return ResponseEntity.ok(createdDto);
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("id", createdUser.getUserID());
+        responseMap.put("message", "Uživatel vytvořen");
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseMap);
     }
 
     // PUT /api/users/{id}
@@ -79,5 +88,20 @@ public class UserController {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
         UserDto dto = mapper.toDto(user);
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Nahrání profilové fotky
+     * @param id
+     * @param file
+     * @return
+     */
+    @PostMapping("/{id}/uploadProfilePicture")
+    public ResponseEntity<String> uploadProfilePicture(
+            @PathVariable Integer id,
+            @RequestParam("profilePicture") MultipartFile file) {
+
+        String uniqueFilename = userService.uploadProfilePicture(id, file);
+        return ResponseEntity.ok("Profilová fotka nahrána. Soubor: " + uniqueFilename);
     }
 }
