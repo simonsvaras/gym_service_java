@@ -18,6 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Kontroler pro správu uživatelů v systému správy gymu.
+ *
+ * @restController
+ * @requestMapping("/api/users")
+ */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -26,11 +32,23 @@ public class UserController {
 
     @Autowired
     private UserMapper mapper;
+
+    /**
+     * Konstruktor pro injektování služby uživatele.
+     *
+     * @param userService Služba pro správu uživatelů.
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    // GET /api/users
+    /**
+     * Získá seznam všech uživatelů.
+     *
+     * @return ResponseEntity obsahující seznam uživatelských DTO.
+     *
+     * @getMapping("/")
+     */
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers() {
         List<User> users = userService.getAllUsers();
@@ -40,19 +58,34 @@ public class UserController {
         return ResponseEntity.ok(userDtos);
     }
 
-    // GET /api/users/{id}
+    /**
+     * Získá uživatele podle jeho ID.
+     *
+     * @param id ID uživatele.
+     * @return ResponseEntity obsahující uživatelské DTO.
+     *
+     * @getMapping("/{id}")
+     */
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Integer id) {
         User user = userService.getUserById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Uživatel nenalezen s ID " + id));
         UserDto dto = mapper.toDto(user);
         return ResponseEntity.ok(dto);
     }
 
-    // POST /api/users
+    /**
+     * Vytvoří nového uživatele.
+     *
+     * @param userDto DTO obsahující informace o novém uživateli.
+     * @return ResponseEntity obsahující ID vytvořeného uživatele a zprávu.
+     *
+     * @postMapping("/")
+     */
     @PostMapping
-    public ResponseEntity<Map<String, Object>>createUser(@Valid @RequestBody UserDto userDto) {
-        System.out.println("Received UserDto: " + userDto);
+    public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody UserDto userDto) {
+        // Logování přijatého UserDto místo System.out.println
+        System.out.println("Přijatý UserDto: " + userDto);
 
         User user = mapper.toEntity(userDto);
         User createdUser = userService.createUser(user);
@@ -64,7 +97,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseMap);
     }
 
-    // PUT /api/users/{id}
+    /**
+     * Aktualizuje informace o uživateli podle jeho ID.
+     *
+     * @param id      ID uživatele, kterého chceme aktualizovat.
+     * @param userDto DTO obsahující aktualizované informace o uživateli.
+     * @return ResponseEntity obsahující aktualizované uživatelské DTO.
+     *
+     * @putMapping("/{id}")
+     */
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Integer id,
                                               @Valid @RequestBody UserDto userDto) {
@@ -74,27 +115,44 @@ public class UserController {
         return ResponseEntity.ok(updatedDto);
     }
 
-    // DELETE /api/users/{id}
+    /**
+     * Smaže uživatele podle jeho ID.
+     *
+     * @param id ID uživatele, kterého chceme smazat.
+     * @return ResponseEntity bez obsahu, indikující úspěšné smazání.
+     *
+     * @deleteMapping("/{id}")
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Příklad speciálního endpointu: GET /api/users/byEmail/{email}
+    /**
+     * Získá uživatele podle jeho emailu.
+     *
+     * @param email Email uživatele.
+     * @return ResponseEntity obsahující uživatelské DTO.
+     *
+     * @getMapping("/byEmail/{email}")
+     */
     @GetMapping("/byEmail/{email}")
     public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
         User user = userService.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Uživatel nenalezen s emailem " + email));
         UserDto dto = mapper.toDto(user);
         return ResponseEntity.ok(dto);
     }
 
     /**
-     * Nahrání profilové fotky
-     * @param id
-     * @param file
-     * @return
+     * Nahraje profilovou fotku uživatele.
+     *
+     * @param id   ID uživatele, jehož fotku nahráváme.
+     * @param file MultipartFile obsahující nahrávanou fotku.
+     * @return ResponseEntity obsahující zprávu o úspěšném nahrání.
+     *
+     * @postMapping("/{id}/uploadProfilePicture")
      */
     @PostMapping("/{id}/uploadProfilePicture")
     public ResponseEntity<String> uploadProfilePicture(

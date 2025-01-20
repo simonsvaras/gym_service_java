@@ -5,6 +5,8 @@ import com.gym.gymmanagementsystem.dto.mappers.UserSubscriptionMapper;
 import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.UserSubscriptionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,18 +14,37 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Kontroler pro správu předplatných uživatelů v systému správy gymu.
+ *
+ * @restController
+ * @requestMapping("/api/user-subscriptions")
+ */
 @RestController
 @RequestMapping("/api/user-subscriptions")
 public class UserSubscriptionController {
 
     private final UserSubscriptionService userSubscriptionService;
+
+    @Autowired
     private UserSubscriptionMapper mapper;
 
+    /**
+     * Konstruktor pro injektování služby předplatných uživatelů.
+     *
+     * @param userSubscriptionService Služba pro správu předplatných uživatelů.
+     */
     public UserSubscriptionController(UserSubscriptionService userSubscriptionService) {
         this.userSubscriptionService = userSubscriptionService;
     }
 
-    // GET /api/user-subscriptions
+    /**
+     * Získá seznam všech předplatných uživatelů.
+     *
+     * @return ResponseEntity obsahující seznam DTO předplatných uživatelů.
+     *
+     * @getMapping("/")
+     */
     @GetMapping
     public ResponseEntity<List<UserSubscriptionDto>> getAllUserSubscriptions() {
         List<UserSubscription> subscriptions = userSubscriptionService.getAllUserSubscriptions();
@@ -33,25 +54,47 @@ public class UserSubscriptionController {
         return ResponseEntity.ok(subscriptionDtos);
     }
 
-    // GET /api/user-subscriptions/{id}
+    /**
+     * Získá předplatné uživatele podle jeho ID.
+     *
+     * @param id ID předplatného uživatele.
+     * @return ResponseEntity obsahující DTO předplatného uživatele.
+     *
+     * @getMapping("/{id}")
+     */
     @GetMapping("/{id}")
     public ResponseEntity<UserSubscriptionDto> getUserSubscriptionById(@PathVariable Integer id) {
         UserSubscription userSubscription = userSubscriptionService.getUserSubscriptionById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UserSubscription not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("UserSubscription nenalezeno s ID " + id));
         UserSubscriptionDto dto = mapper.toDto(userSubscription);
         return ResponseEntity.ok(dto);
     }
 
-    // POST /api/user-subscriptions
+    /**
+     * Vytvoří nové předplatné uživatele.
+     *
+     * @param userSubscriptionDto DTO obsahující informace o novém předplatném uživatele.
+     * @return ResponseEntity obsahující vytvořené DTO předplatného uživatele.
+     *
+     * @postMapping("/")
+     */
     @PostMapping
     public ResponseEntity<UserSubscriptionDto> createUserSubscription(@Valid @RequestBody UserSubscriptionDto userSubscriptionDto) {
         UserSubscription userSubscription = mapper.toEntity(userSubscriptionDto);
         UserSubscription created = userSubscriptionService.createUserSubscription(userSubscription);
         UserSubscriptionDto createdDto = mapper.toDto(created);
-        return ResponseEntity.ok(createdDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
     }
 
-    // PUT /api/user-subscriptions/{id}
+    /**
+     * Aktualizuje informace o předplatném uživatele podle jeho ID.
+     *
+     * @param id                  ID předplatného uživatele, které chceme aktualizovat.
+     * @param userSubscriptionDto DTO obsahující aktualizované informace o předplatném uživatele.
+     * @return ResponseEntity obsahující aktualizované DTO předplatného uživatele.
+     *
+     * @putMapping("/{id}")
+     */
     @PutMapping("/{id}")
     public ResponseEntity<UserSubscriptionDto> updateUserSubscription(@PathVariable Integer id,
                                                                       @Valid @RequestBody UserSubscriptionDto userSubscriptionDto) {
@@ -61,14 +104,28 @@ public class UserSubscriptionController {
         return ResponseEntity.ok(updatedDto);
     }
 
-    // DELETE /api/user-subscriptions/{id}
+    /**
+     * Smaže předplatné uživatele podle jeho ID.
+     *
+     * @param id ID předplatného uživatele, které chceme smazat.
+     * @return ResponseEntity bez obsahu, indikující úspěšné smazání.
+     *
+     * @deleteMapping("/{id}")
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserSubscription(@PathVariable Integer id) {
         userSubscriptionService.deleteUserSubscription(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build(); // 204 No Content
     }
 
-    // Speciální příklad: GET /api/user-subscriptions/user/{userId}
+    /**
+     * Získá seznam předplatných uživatelů podle ID uživatele.
+     *
+     * @param userId ID uživatele.
+     * @return ResponseEntity obsahující seznam DTO předplatných uživatelů.
+     *
+     * @getMapping("/user/{userId}")
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<UserSubscriptionDto>> findByUserId(@PathVariable Integer userId) {
         List<UserSubscription> subscriptions = userSubscriptionService.findByUserId(userId);
@@ -78,7 +135,13 @@ public class UserSubscriptionController {
         return ResponseEntity.ok(subscriptionDtos);
     }
 
-    // Další speciální příklad: GET /api/user-subscriptions/active
+    /**
+     * Získá seznam aktivních předplatných uživatelů.
+     *
+     * @return ResponseEntity obsahující seznam DTO aktivních předplatných uživatelů.
+     *
+     * @getMapping("/active")
+     */
     @GetMapping("/active")
     public ResponseEntity<List<UserSubscriptionDto>> findActiveSubscriptions() {
         List<UserSubscription> activeSubs = userSubscriptionService.findActiveSubscriptions();
