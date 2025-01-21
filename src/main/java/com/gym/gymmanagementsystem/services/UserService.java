@@ -15,4 +15,6 @@ public interface UserService {
     void deleteUser(Integer id);
     Optional<User> findByEmail(String email);
     public String uploadProfilePicture(Integer userId, MultipartFile file);
+
+    List<User> searchUsers(String searchTerm);
 }

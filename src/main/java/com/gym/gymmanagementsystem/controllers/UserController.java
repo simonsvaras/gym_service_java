@@ -43,15 +43,21 @@ public class UserController {
     }
 
     /**
-     * Získá seznam všech uživatelů.
+     * Získá seznam všech uživatelů nebo filtrovaných uživatelů podle searchTerm.
      *
+     * @param searchTerm Volitelný parametr pro filtrování uživatelů podle jména nebo příjmení.
      * @return ResponseEntity obsahující seznam uživatelských DTO.
      *
      * @getMapping("/")
      */
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam(required = false) String searchTerm) {
+        List<User> users;
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            users = userService.searchUsers(searchTerm);
+        } else {
+            users = userService.getAllUsers();
+        }
         List<UserDto> userDtos = users.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());

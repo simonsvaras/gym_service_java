@@ -105,9 +105,6 @@ public class UserServiceImpl implements UserService {
             file.transferTo(destinationPath.toFile());
 
             // 5) Do DB (sloupec profilePhoto) uložit **relativní** cestu (nebo jen název souboru)
-            //    - lze uložit i plnou absolutní cestu, ale většinou stačí relativní cesta + prefix
-            //    - např.: /profile-photos/<uniqueFilename> pokud se následně servíruje
-            //      přes konfigurovaný statický mapping
             user.setProfilePhoto(uniqueFilename);
             userRepository.save(user);
 
@@ -116,5 +113,19 @@ public class UserServiceImpl implements UserService {
         } catch (IOException e) {
             throw new RuntimeException("Chyba při ukládání souboru: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Najde uživatele podle zadaného výrazu v jméně nebo příjmení.
+     *
+     * @param searchTerm Hledaný výraz.
+     * @return Seznam uživatelů odpovídajících kritériím.
+     */
+    @Override
+    public List<User> searchUsers(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return getAllUsers();
+        }
+        return userRepository.findByFirstnameContainingIgnoreCaseOrLastnameContainingIgnoreCase(searchTerm, searchTerm);
     }
 }
