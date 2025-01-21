@@ -6,11 +6,14 @@ import com.gym.gymmanagementsystem.entities.EntryHistory;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.EntryHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +71,27 @@ public class EntryHistoryController {
                 .orElseThrow(() -> new ResourceNotFoundException("EntryHistory nenalezena s ID " + id));
         EntryHistoryDto dto = mapper.toDto(history);
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Získá seznam záznamů historie vstupů v zadaném časovém rozsahu.
+     *
+     * @param start Počáteční datum a čas rozsahu.
+     * @param end    Konečné datum a čas rozsahu.
+     * @return ResponseEntity obsahující seznam DTO záznamů historie vstupů v zadaném rozsahu.
+     *
+     * @getMapping("/range")
+     */
+    @GetMapping("/range")
+    public ResponseEntity<List<EntryHistoryDto>> getEntriesInRange(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
+    ) {
+        List<EntryHistory> records = entryHistoryService.getEntriesInRange(start, end);
+        List<EntryHistoryDto> dtos = records.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     /**

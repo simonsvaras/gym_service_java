@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "TransactionHistory")
+@Table(name = "Transactionhistory")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,10 +34,10 @@ public class TransactionHistory {
     private String purchaseType; // 'Subscription' nebo 'OneTimeEntry'
 
     @ManyToOne
-    @JoinColumn(name = "UserSubscriptionID")
+    @JoinColumn(name = "usersubscriptionID")
     private UserSubscription userSubscription;
 
     @ManyToOne
-    @JoinColumn(name = "OneTimeEntryID")
+    @JoinColumn(name = "onetimeentryid")
     private UserOneTimeEntry oneTimeEntry;
 }

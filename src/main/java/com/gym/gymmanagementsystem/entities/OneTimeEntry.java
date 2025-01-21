@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "OneTimeEntries")
+@Table(name = "Onetimeentries")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,6 +16,7 @@ public class OneTimeEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "onetimeentryID")
     private Integer oneTimeEntryID;
 
     @Column(name = "entryname",length = 50)

@@ -6,11 +6,14 @@ import com.gym.gymmanagementsystem.entities.TransactionHistory;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.TransactionHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +71,27 @@ public class TransactionHistoryController {
                 .orElseThrow(() -> new ResourceNotFoundException("TransactionHistory nenalezena s ID " + id));
         TransactionHistoryDto dto = mapper.toDto(history);
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Získá seznam transakcí v zadaném časovém rozsahu.
+     *
+     * @param start Počáteční datum a čas rozsahu.
+     * @param end    Konečné datum a čas rozsahu.
+     * @return ResponseEntity obsahující seznam DTO transakcí v zadaném rozsahu.
+     *
+     * @getMapping("/range")
+     */
+    @GetMapping("/range")
+    public ResponseEntity<List<TransactionHistoryDto>> getTransactionsInRange(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
+    ) {
+        List<TransactionHistory> records = transactionHistoryService.getTransactionsInRange(start, end);
+        List<TransactionHistoryDto> dtos = records.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     /**

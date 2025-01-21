@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.services;
 
 import com.gym.gymmanagementsystem.entities.TransactionHistory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,7 @@ public interface TransactionHistoryService {
     void deleteTransactionHistory(Integer id);
     List<TransactionHistory> findByUserId(Integer userId);
     List<TransactionHistory> findByPurchaseType(String purchaseType);
+
+    List<TransactionHistory> getTransactionsInRange(LocalDateTime start, LocalDateTime end);
+
 }

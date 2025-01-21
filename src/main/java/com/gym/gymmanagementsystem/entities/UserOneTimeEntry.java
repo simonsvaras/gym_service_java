@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "UserOneTimeEntries")
+@Table(name = "Useronetimeentries")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,6 +16,7 @@ public class UserOneTimeEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "useronetimeentryID")
     private Integer userOneTimeEntryID;
 
     @ManyToOne
@@ -23,7 +24,7 @@ public class UserOneTimeEntry {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "OneTimeEntryID", nullable = false)
+    @JoinColumn(name = "onetimeentryID", nullable = false)
     private OneTimeEntry oneTimeEntry;
 
     @Column(name = "purchasedate")

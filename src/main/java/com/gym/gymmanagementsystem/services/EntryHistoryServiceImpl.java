@@ -6,6 +6,8 @@ import com.gym.gymmanagementsystem.repositories.EntryHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,5 +57,11 @@ public class EntryHistoryServiceImpl implements EntryHistoryService {
     public List<EntryHistory> findByUserId(Integer userId) {
         return entryHistoryRepository.findByUserUserID(userId);
     }
+
+    @Override
+    public List<EntryHistory> getEntriesInRange(LocalDateTime start, LocalDateTime end){
+        return entryHistoryRepository.findByEntryDateBetween(start, end);
+    }
+
 
 }
