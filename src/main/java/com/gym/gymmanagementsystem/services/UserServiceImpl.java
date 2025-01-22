@@ -1,12 +1,15 @@
 package com.gym.gymmanagementsystem.services;
 
 
+import com.gym.gymmanagementsystem.FileResourceData;
 import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -127,5 +130,42 @@ public class UserServiceImpl implements UserService {
             return getAllUsers();
         }
         return userRepository.findByFirstnameContainingIgnoreCaseOrLastnameContainingIgnoreCase(searchTerm, searchTerm);
+    }
+
+    @Override
+    public FileResourceData loadProfilePicture(Integer userId) {
+        // 1) Najdeme uživatele
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
+
+        // 2) Zjistíme, jestli user má v DB nějakou fotku
+        String photoFilename = user.getProfilePhoto();
+        if (photoFilename == null || photoFilename.isEmpty()) {
+            throw new ResourceNotFoundException("User " + userId + " has no profile photo set.");
+        }
+
+        // 3) Složíme fyzickou cestu k souboru
+        Path filePath = Paths.get(uploadDir).resolve(photoFilename).normalize();
+        if (!Files.exists(filePath)) {
+            throw new ResourceNotFoundException("Photo file not found: " + filePath);
+        }
+
+        try {
+            // 4) Vytvoříme Resource
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResourceNotFoundException("File can't be read as Resource: " + filePath);
+            }
+
+            // 5) Detekujeme content-type (pokud chceš)
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+            return new FileResourceData(resource, contentType);
+
+        } catch (IOException e) {
+            throw new ResourceNotFoundException("Error reading file: " + e.getMessage());
+        }
     }
 }

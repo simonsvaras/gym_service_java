@@ -1,12 +1,17 @@
 package com.gym.gymmanagementsystem.controllers;
 
+import com.gym.gymmanagementsystem.FileResourceData;
 import com.gym.gymmanagementsystem.dto.UserDto;
 import com.gym.gymmanagementsystem.dto.mappers.UserMapper;
 import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -168,4 +173,16 @@ public class UserController {
         String uniqueFilename = userService.uploadProfilePicture(id, file);
         return ResponseEntity.ok("Profilová fotka nahrána. Soubor: " + uniqueFilename);
     }
+
+    @GetMapping("/{id}/profilePhoto")
+    public ResponseEntity<Resource> getProfilePhoto(@PathVariable Integer id) {
+        // Zavoláme servis
+        FileResourceData fileData = userService.loadProfilePicture(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(fileData.getContentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileData.getResource().getFilename() + "\"")
+                .body(fileData.getResource());
+    }
+
 }
