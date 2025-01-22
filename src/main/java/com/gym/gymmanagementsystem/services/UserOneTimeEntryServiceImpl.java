@@ -1,6 +1,7 @@
 package com.gym.gymmanagementsystem.services;
 
 
+import com.gym.gymmanagementsystem.entities.TransactionHistory;
 import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
@@ -17,6 +18,9 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
     @Autowired
     private UserOneTimeEntryRepository userOneTimeEntryRepository;
 
+    @Autowired
+    private TransactionHistoryService transactionHistoryService;
+
     @Override
     public List<UserOneTimeEntry> getAllUserOneTimeEntries() {
         return userOneTimeEntryRepository.findAll();
@@ -29,8 +33,21 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
 
     @Override
     public UserOneTimeEntry createUserOneTimeEntry(UserOneTimeEntry userOneTimeEntry) {
-        // Případná validace nebo další logika
-        return userOneTimeEntryRepository.save(userOneTimeEntry);
+        // Uložení nového jednorázového předplatného
+        UserOneTimeEntry createdEntry = userOneTimeEntryRepository.save(userOneTimeEntry);
+
+        // Vytvoření a uložení záznamu transakce
+        TransactionHistory transaction = new TransactionHistory();
+        transaction.setUser(createdEntry.getUser()); // Předpokládáme, že UserOneTimeEntry má referenci na User
+        transaction.setAmount(createdEntry.getOneTimeEntry().getPrice()); // Předpokládáme, že OneTimeEntry má cenu
+        transaction.setDescription("Nákup jednorázového vstupu " + createdEntry.getOneTimeEntry().getEntryName());
+        transaction.setPurchaseType(createdEntry.getOneTimeEntry().getEntryName());
+        transaction.setOneTimeEntry(createdEntry);
+
+
+        transactionHistoryService.createTransactionHistory(transaction);
+
+        return createdEntry;
     }
 
     @Override

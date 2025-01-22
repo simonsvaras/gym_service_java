@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,19 +73,27 @@ public class UserOneTimeEntryController {
     }
 
     /**
-     * Vytvoří nový jednorázový vstup uživatele.
+     * Vytvoří nové jednorázové vstupy uživatele.
      *
      * @param userOneTimeEntryDto DTO obsahující informace o novém jednorázovém vstupu uživatele.
-     * @return ResponseEntity obsahující vytvořené DTO jednorázového vstupu uživatele.
-     *
-     * @postMapping("/")
+     * @param count                Počet vstupů k vytvoření (volitelný, výchozí hodnota je 1).
+     * @return ResponseEntity obsahující seznam vytvořených DTO jednorázových vstupů uživatele.
      */
     @PostMapping
-    public ResponseEntity<UserOneTimeEntryDto> createUserOneTimeEntry(@Valid @RequestBody UserOneTimeEntryDto userOneTimeEntryDto) {
-        UserOneTimeEntry userOneTimeEntry = mapper.toEntity(userOneTimeEntryDto);
-        UserOneTimeEntry created = userOneTimeEntryService.createUserOneTimeEntry(userOneTimeEntry);
-        UserOneTimeEntryDto createdDto = mapper.toDto(created);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
+    public ResponseEntity<List<UserOneTimeEntryDto>> createUserOneTimeEntries(
+            @Valid @RequestBody UserOneTimeEntryDto userOneTimeEntryDto,
+            @RequestParam(value = "count", defaultValue = "1") int count) {
+
+        List<UserOneTimeEntryDto> createdDtos = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            UserOneTimeEntry userOneTimeEntry = mapper.toEntity(userOneTimeEntryDto);
+            UserOneTimeEntry created = userOneTimeEntryService.createUserOneTimeEntry(userOneTimeEntry);
+            UserOneTimeEntryDto createdDto = mapper.toDto(created);
+            createdDtos.add(createdDto);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDtos);
     }
 
     /**
