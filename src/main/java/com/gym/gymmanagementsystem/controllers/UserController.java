@@ -1,11 +1,18 @@
 package com.gym.gymmanagementsystem.controllers;
 
 import com.gym.gymmanagementsystem.FileResourceData;
-import com.gym.gymmanagementsystem.dto.UserDto;
+import com.gym.gymmanagementsystem.dto.*;
+import com.gym.gymmanagementsystem.dto.mappers.EntryHistoryMapper;
+import com.gym.gymmanagementsystem.dto.mappers.SubscriptionMapper;
 import com.gym.gymmanagementsystem.dto.mappers.UserMapper;
+import com.gym.gymmanagementsystem.dto.mappers.UserSubscriptionMapper;
+import com.gym.gymmanagementsystem.entities.EntryHistory;
 import com.gym.gymmanagementsystem.entities.User;
+import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
+import com.gym.gymmanagementsystem.services.EntryHistoryService;
 import com.gym.gymmanagementsystem.services.UserService;
+import com.gym.gymmanagementsystem.services.UserSubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -18,9 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +43,18 @@ public class UserController {
 
     @Autowired
     private UserMapper mapper;
+    @Autowired
+    private UserSubscriptionMapper userSubscriptionMapper;
+    @Autowired
+    private EntryHistoryMapper entryHistoryMapper;
+
+    @Autowired
+    private UserSubscriptionService userSubscriptionService;
+
+    @Autowired
+    private EntryHistoryService entryHistoryService;
+
+
 
     /**
      * Konstruktor pro injektování služby uživatele.
@@ -183,6 +201,52 @@ public class UserController {
                 .contentType(MediaType.parseMediaType(fileData.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileData.getResource().getFilename() + "\"")
                 .body(fileData.getResource());
+    }
+
+    /**
+     * Vrátí rozšířené informace o všech uživatelích:
+     *  - základní údaje (id, jméno, příjmení, email, fotka)
+     *  - zda má aktivní (platné) předplatné
+     *  - "poslední" subscription (pokud existuje)
+     *  - datum posledního vstupu
+     */
+    @GetMapping("/detailed")
+    public ResponseEntity<List<DetailedUserDto>> getAllUsersDetailed() {
+        List<User> users = userService.getAllUsers();
+        List<DetailedUserDto> detailedList = new ArrayList<>();
+
+        for (User u : users) {
+            DetailedUserDto dto = new DetailedUserDto();
+            dto.setUserID(u.getUserID());
+            dto.setFirstname(u.getFirstname());
+            dto.setLastname(u.getLastname());
+            dto.setEmail(u.getEmail());
+
+            // Pokud má user v DB nějakou profilePhoto (např. unikátní název souboru),
+            // poskládáme URL /api/users/{id}/profilePhoto
+            if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
+                dto.setProfilePhotoPath("/api/users/" + u.getUserID() + "/profilePhoto");
+            }
+
+            // 1) Zjistíme subscriptiony uživatele
+            List<UserSubscription> subscriptions = userSubscriptionService.findByUserId(u.getUserID());
+            List<UserSubscriptionDto> subscriptionDtos = subscriptions.stream()
+                    .map(userSubscriptionMapper::toDto)
+                    .toList();
+            dto.setSubscriptions(subscriptionDtos);
+
+            // 4) Historie vstupů
+            List<EntryHistory> results = entryHistoryService.findByUserId(u.getUserID());
+            List<EntryHistoryDto> resultDtos = results.stream()
+                    .map(entryHistoryMapper::toDto)
+                    .toList();
+
+            dto.setEntryHistories(resultDtos);
+
+            detailedList.add(dto);
+        }
+
+        return ResponseEntity.ok(detailedList);
     }
 
 }
