@@ -6,10 +6,12 @@ import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
+import com.gym.gymmanagementsystem.services.specifications.UserSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -168,4 +171,55 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("Error reading file: " + e.getMessage());
         }
     }
+
+    @Override
+    public List<User> getUsersWithEntryHistoryInRange(LocalDateTime start, LocalDateTime end) {
+        Specification<User> spec = UserSpecifications.hasEntryHistoryInRange(start, end);
+        return userRepository.findAll(spec);
+    }
+
+
+    /**
+     * Vrací seznam uživatelů dle zadaných filtrů.
+     *
+     * @param entryStart         počáteční datum a čas pro filtrování záznamů vstupů, může být null
+     * @param entryEnd           konečné datum a čas pro filtrování záznamů vstupů, může být null
+     * @param minEntryCount      minimální počet vstupů, může být null
+     * @param subscriptionStatus stav předplatného ("active", "inactive", "expiring"), může být null
+     * @return seznam uživatelů splňující daná kritéria; pokud nejsou zadány žádné filtry, vrací všechny uživatele
+     */
+    @Override
+    public List<User> getFilteredUsers(LocalDateTime entryStart, LocalDateTime entryEnd, Integer minEntryCount, String subscriptionStatus) {
+        Specification<User> spec = Specification.where(null);
+
+        // Filtrace podle data vstupu, pokud jsou oba parametry zadány
+        if (entryStart != null && entryEnd != null) {
+            spec = spec.and(UserSpecifications.hasEntryHistoryInRange(entryStart, entryEnd));
+        }
+
+        // Filtrace podle minimálního počtu vstupů
+        if (minEntryCount != null) {
+            spec = spec.and(UserSpecifications.hasMinimumEntryCount(minEntryCount));
+        }
+
+        // Filtrace podle stavu předplatného
+        if (subscriptionStatus != null) {
+            if ("active".equalsIgnoreCase(subscriptionStatus)) {
+                spec = spec.and(UserSpecifications.hasActiveSubscription());
+            } else if ("inactive".equalsIgnoreCase(subscriptionStatus)) {
+                spec = spec.and(UserSpecifications.hasNoActiveSubscription());
+            } else if ("expiring".equalsIgnoreCase(subscriptionStatus)) {
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime plus7Days = now.plusDays(7); // předpokládáme "končí brzy" = do 7 dnů
+                spec = spec.and(UserSpecifications.hasExpiringSubscription(now, plus7Days));
+            }
+        }
+
+        if (spec != null) {
+            return userRepository.findAll(spec);
+        } else {
+            return userRepository.findAll();
+        }
+    }
+
 }

@@ -16,6 +16,7 @@ import com.gym.gymmanagementsystem.services.UserSubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -203,18 +204,37 @@ public class UserController {
                 .body(fileData.getResource());
     }
 
+
     /**
-     * Vrátí rozšířené informace o všech uživatelích:
-     *  - základní údaje (id, jméno, příjmení, email, fotka)
-     *  - zda má aktivní (platné) předplatné
-     *  - "poslední" subscription (pokud existuje)
-     *  - datum posledního vstupu
+     * Vrací detailní informace o uživatelích s volitelným filtrováním.
+     * <p>
+     * Možné volitelné parametry:
+     * <ul>
+     *   <li><b>entryStart</b> a <b>entryEnd</b>: časový interval, ve kterém musí mít alespoň jeden záznam vstupu</li>
+     *   <li><b>minEntryCount</b>: minimální počet vstupů</li>
+     *   <li><b>subscriptionStatus</b>: stav předplatného ("active", "inactive", "expiring")</li>
+     * </ul>
+     * </p>
+     *
+     * @param entryStart         počáteční datum a čas vstupu, nepovinné
+     * @param entryEnd           konečné datum a čas vstupu, nepovinné
+     * @param minEntryCount      minimální počet vstupů, nepovinné
+     * @param subscriptionStatus stav předplatného, nepovinné
+     * @return ResponseEntity obsahující seznam DetailedUserDto splňující daná kritéria
      */
     @GetMapping("/detailed")
-    public ResponseEntity<List<DetailedUserDto>> getAllUsersDetailed() {
-        List<User> users = userService.getAllUsers();
-        List<DetailedUserDto> detailedList = new ArrayList<>();
+    public ResponseEntity<List<DetailedUserDto>> getAllUsersDetailed(
+            @RequestParam(value = "entryStart", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime entryStart,
+            @RequestParam(value = "entryEnd", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime entryEnd,
+            @RequestParam(value = "minEntryCount", required = false) Integer minEntryCount,
+            @RequestParam(value = "subscriptionStatus", required = false) String subscriptionStatus) {
 
+        // Voláme novou metodu service, která zohlední předané filtry.
+        List<User> users = userService.getFilteredUsers(entryStart, entryEnd, minEntryCount, subscriptionStatus);
+
+        List<DetailedUserDto> detailedList = new ArrayList<>();
         for (User u : users) {
             DetailedUserDto dto = new DetailedUserDto();
             dto.setUserID(u.getUserID());
@@ -222,31 +242,27 @@ public class UserController {
             dto.setLastname(u.getLastname());
             dto.setEmail(u.getEmail());
 
-            // Pokud má user v DB nějakou profilePhoto (např. unikátní název souboru),
-            // poskládáme URL /api/users/{id}/profilePhoto
+            // Pokud má uživatel fotku, sestavíme URL ke stažení
             if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
                 dto.setProfilePhotoPath("/api/users/" + u.getUserID() + "/profilePhoto");
             }
 
-            // 1) Zjistíme subscriptiony uživatele
-            List<UserSubscription> subscriptions = userSubscriptionService.findByUserId(u.getUserID());
-            List<UserSubscriptionDto> subscriptionDtos = subscriptions.stream()
+            // Příklad: pokud máš v entitě collection subscription, mapuj je pomocí odpovídajícího mapperu
+            List<UserSubscriptionDto> subscriptionDtos = u.getUserSubscriptions().stream()
                     .map(userSubscriptionMapper::toDto)
                     .toList();
             dto.setSubscriptions(subscriptionDtos);
 
-            // 4) Historie vstupů
-            List<EntryHistory> results = entryHistoryService.findByUserId(u.getUserID());
-            List<EntryHistoryDto> resultDtos = results.stream()
+            // Mapování historie vstupů (předpokládáme, že uživatel má kolekci entryHistories)
+            List<EntryHistoryDto> entryHistoryDtos = u.getEntryHistories().stream()
                     .map(entryHistoryMapper::toDto)
                     .toList();
-
-            dto.setEntryHistories(resultDtos);
+            dto.setEntryHistories(entryHistoryDtos);
 
             detailedList.add(dto);
         }
-
         return ResponseEntity.ok(detailedList);
     }
+
 
 }
