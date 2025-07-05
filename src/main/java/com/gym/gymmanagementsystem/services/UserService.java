@@ -42,4 +42,16 @@ public interface UserService {
 
     List<User> getFilteredUsers(LocalDateTime entryStart, LocalDateTime entryEnd, Integer minEntryCount, String subscriptionStatus);
 
+    /**
+     * Assigns a card identified by its number to the given user.
+     * <p>
+     * If the card does not exist, it will be created. If the card already
+     * exists and is assigned to another user, a {@link com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException}
+     * is thrown.
+     *
+     * @param userId     ID of the user to whom the card should be assigned
+     * @param cardNumber number of the card
+     */
+    void assignCardToUser(Integer userId, String cardNumber);
+
 }

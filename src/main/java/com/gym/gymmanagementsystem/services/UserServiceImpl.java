@@ -6,6 +6,7 @@ import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
+import com.gym.gymmanagementsystem.repositories.CardRepository;
 import com.gym.gymmanagementsystem.services.specifications.UserSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CardRepository cardRepository;
     @Value("${upload.profile-photos}")
     private String uploadDir;
 
@@ -220,6 +223,29 @@ public class UserServiceImpl implements UserService {
         } else {
             return userRepository.findAll();
         }
+    }
+
+    @Override
+    public void assignCardToUser(Integer userId, String cardNumber) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
+
+        var optionalCard = cardRepository.findByCardNumber(cardNumber);
+        var card = optionalCard.orElseGet(() -> {
+            var newCard = new com.gym.gymmanagementsystem.entities.Card();
+            newCard.setCardNumber(cardNumber);
+            return cardRepository.save(newCard);
+        });
+
+        if (card.getUser() != null && !card.getUser().getUserID().equals(userId)) {
+            throw new ResourceAlreadyExistsException("Daná karta je již přiřazena jinému uživateli");
+        }
+
+        card.setUser(user);
+        user.setCard(card);
+        // save both sides
+        cardRepository.save(card);
+        userRepository.save(user);
     }
 
 }

@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.controllers;
 
 import com.gym.gymmanagementsystem.FileResourceData;
 import com.gym.gymmanagementsystem.dto.*;
+import com.gym.gymmanagementsystem.dto.AssignCardRequest;
 import com.gym.gymmanagementsystem.dto.mappers.EntryHistoryMapper;
 import com.gym.gymmanagementsystem.dto.mappers.SubscriptionMapper;
 import com.gym.gymmanagementsystem.dto.mappers.UserMapper;
@@ -200,6 +201,23 @@ public class UserController {
                 .contentType(MediaType.parseMediaType(fileData.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileData.getResource().getFilename() + "\"")
                 .body(fileData.getResource());
+    }
+
+    /**
+     * Přiřadí kartu k uživateli.
+     *
+     * @param userId ID uživatele
+     * @param request objekt obsahující číslo karty
+     * @return ResponseEntity se zprávou o výsledku
+     *
+     * @postMapping("/{userId}/assignCard")
+     */
+    @PostMapping("/{userId}/assignCard")
+    public ResponseEntity<String> assignCardToUser(
+            @PathVariable Integer userId,
+            @Valid @RequestBody AssignCardRequest request) {
+        userService.assignCardToUser(userId, request.getCardNumber());
+        return ResponseEntity.ok("Karta přiřazena");
     }
 
 
