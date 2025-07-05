@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -34,38 +35,87 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     public Optional<UserSubscription> getUserSubscriptionById(Integer id) {
         return userSubscriptionRepository.findById(id);
     }
-
     /**
      * Hlavní logika pro přiřazení/prodloužení předplatného.
      * - najde uživatelovo aktivní subscription (pokud existuje)
-     * - zkontroluje, zda endDate > dnes => prodlouží
-     * - jinak staré nastaví isActive=false a vytvoří nové
-     * - v obou případech zapíše transaction
+     * - pokud existuje:
+     *     • pokud je customEndDate != null, nastaví nový konec na customEndDate
+     *     • jinak prodlouží o původní počet měsíců z předplatného
+     * - pokud neexistuje žádné platné předplatné:
+     *     • deaktivuje všechna aktivní předplatná
+     *     • vytvoří nové od dneška do customEndDate nebo do dne + durationMonths
+     * - v obou případech vytvoří záznam do TransactionHistory, pro subscriptionID=6 použije customPrice
      */
     @Override
-    public UserSubscription createUserSubscription(UserSubscription request) {
-        // 1) Zjistit, zda existuje aktivní a platné subscription pro daného uživatele.
-        UserSubscription currentActive = findActiveValidSubscription(request.getUser().getUserID());
+    public UserSubscription createUserSubscription(
+            UserSubscription request,
+            LocalDate customEndDate,
+            BigDecimal customPrice
+    ) {
+        LocalDate today = LocalDate.now();
+        Integer userId = request.getUser().getUserID();
+        Subscription plan = request.getSubscription();
 
-        // 2) Pokud je subscription stále platné (endDate > dnes), jen ho prodloužíme
-        //    o request.getSubscription().getDurationMonths().
+        // 1) Zjistit, zda existuje aktivní a platné subscription pro daného uživatele.
+        UserSubscription currentActive = findActiveValidSubscription(userId);
+
         if (currentActive != null) {
-            extendSubscription(currentActive, request.getSubscription().getDurationMonths());
-            // Vytvoříme transakci (price, description atd. z requestu)
-            createTransactionHistory(currentActive, request.getSubscription());
-            return updateUserSubscription(currentActive.getUserSubscriptionID(), currentActive);
+            // 2) Pokud uživatel má aktivní předplatné, prodloužíme ho nebo nastavíme customEndDate.
+            //    a) z původního endDate (nebo dnešního data, pokud endDate chybí) vypočteme newEnd
+            LocalDate oldEnd = Optional.ofNullable(currentActive.getEndDate()).orElse(today);
+            LocalDate newEnd = (customEndDate != null)
+                    ? customEndDate
+                    : oldEnd.plusMonths(plan.getDurationMonths());
+            currentActive.setEndDate(newEnd);
+
+            // 3) Vytvoření a uložení transakce:
+            //    - amount = customPrice (pokud zadané) nebo standardní cena plánu
+            //    - description se liší, pokud je customEndDate
+            TransactionHistory tx = new TransactionHistory();
+            tx.setUser(currentActive.getUser());
+            tx.setUserSubscription(currentActive);
+            tx.setPurchaseType("Subscription");
+            tx.setAmount((customPrice != null) ? customPrice : plan.getPrice());
+            if (customEndDate != null) {
+                tx.setDescription("Manuální nastavení platnosti do " + newEnd);
+            } else {
+                tx.setDescription("Prodloužení o " + plan.getDurationMonths() + " měsíců");
+            }
+            transactionHistoryRepository.save(tx);
+
+            // 4) Uložení aktualizovaného předplatného
+            return userSubscriptionRepository.save(currentActive);
         }
 
-        // 3) Pokud neexistuje žádné platné subscription (nebo je expirované),
-        //    staré (aktivní) předplatné (pokud existuje) deaktivujeme
-        deactivateActiveSubscription(request.getUser().getUserID());
+        // 5) Pokud neexistuje žádné platné předplatné:
+        //    a) deaktivujeme všechna dosud aktivní
+        deactivateActiveSubscription(userId);
 
-        // 4) Vytvořit nové subscription
-        UserSubscription newSub = createNewSubscription(request);
-        UserSubscription saved = userSubscriptionRepository.save(newSub);
+        //    b) vytvoříme nové s startDate = dnes a endDate = customEndDate nebo dnes + durationMonths
+        UserSubscription fresh = new UserSubscription();
+        fresh.setUser(request.getUser());
+        fresh.setSubscription(plan);
+        fresh.setStartDate(today);
+        LocalDate endDate = (customEndDate != null)
+                ? customEndDate
+                : today.plusMonths(plan.getDurationMonths());
+        fresh.setEndDate(endDate);
+        fresh.setIsActive(true);
 
-        // 5) Zapsat transaction
-        createTransactionHistory(saved, request.getSubscription());
+        UserSubscription saved = userSubscriptionRepository.save(fresh);
+
+        // 6) Vytvoření a uložení transakce pro nové předplatné:
+        TransactionHistory txNew = new TransactionHistory();
+        txNew.setUser(saved.getUser());
+        txNew.setUserSubscription(saved);
+        txNew.setPurchaseType("Subscription");
+        txNew.setAmount((customPrice != null) ? customPrice : plan.getPrice());
+        if (customEndDate != null) {
+            txNew.setDescription("Manuální nastavení platnosti do " + endDate);
+        } else {
+            txNew.setDescription("Nákup předplatného na " + plan.getDurationMonths() + " měsíců");
+        }
+        transactionHistoryRepository.save(txNew);
 
         return saved;
     }

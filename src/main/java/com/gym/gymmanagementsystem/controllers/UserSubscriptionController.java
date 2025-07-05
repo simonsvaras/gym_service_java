@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -73,17 +75,48 @@ public class UserSubscriptionController {
     /**
      * Vytvoří nové předplatné uživatele.
      *
-     * @param userSubscriptionDto DTO obsahující informace o novém předplatném uživatele.
+     * @param dto DTO obsahující informace o novém předplatném uživatele.
      * @return ResponseEntity obsahující vytvořené DTO předplatného uživatele.
      *
      * @postMapping("/")
      */
     @PostMapping
-    public ResponseEntity<UserSubscriptionDto> createUserSubscription(@Valid @RequestBody UserSubscriptionDto userSubscriptionDto) {
-        UserSubscription userSubscription = mapper.toEntity(userSubscriptionDto);
-        UserSubscription created = userSubscriptionService.createUserSubscription(userSubscription);
-        UserSubscriptionDto createdDto = mapper.toDto(created);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
+    public ResponseEntity<UserSubscriptionDto> createUserSubscription(
+            @Valid @RequestBody UserSubscriptionDto dto) {
+
+        // Podmíněná validace pro subscriptionID = 6
+        if (dto.getSubscriptionID().equals(6)) {
+            if (dto.getCustomEndDate() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Pole customEndDate je povinné pro subscriptionID = 6"
+                );
+            }
+            if (dto.getCustomPrice() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Pole customPrice je povinné pro subscriptionID = 6"
+                );
+            }
+        } else {
+            if (dto.getCustomEndDate() != null || dto.getCustomPrice() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "customEndDate a customPrice lze zadat pouze pro subscriptionID = 6"
+                );
+            }
+        }
+
+        // Mapování a volání service
+        UserSubscription reqEnt = mapper.toEntity(dto);
+        UserSubscription created = userSubscriptionService.createUserSubscription(
+                reqEnt,
+                dto.getCustomEndDate(),
+                dto.getCustomPrice()
+        );
+
+        UserSubscriptionDto out = mapper.toDto(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(out);
     }
 
     /**

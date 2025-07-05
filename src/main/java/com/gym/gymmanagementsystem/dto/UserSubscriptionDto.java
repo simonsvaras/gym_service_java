@@ -3,6 +3,7 @@ package com.gym.gymmanagementsystem.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -18,6 +19,9 @@ public class UserSubscriptionDto {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    private LocalDate customEndDate;
+    protected BigDecimal customPrice;
 
     private Boolean isActive = false;
 

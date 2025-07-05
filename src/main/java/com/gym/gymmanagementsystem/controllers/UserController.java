@@ -48,10 +48,8 @@ public class UserController {
     private UserSubscriptionMapper userSubscriptionMapper;
     @Autowired
     private EntryHistoryMapper entryHistoryMapper;
-
     @Autowired
     private UserSubscriptionService userSubscriptionService;
-
     @Autowired
     private EntryHistoryService entryHistoryService;
 
