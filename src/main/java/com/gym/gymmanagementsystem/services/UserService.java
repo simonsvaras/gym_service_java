@@ -54,4 +54,15 @@ public interface UserService {
      */
     void assignCardToUser(Integer userId, String cardNumber);
 
+    /**
+     * Vyhledá uživatele podle čísla karty.
+     * <p>
+     * Pokud karta s daným číslem neexistuje, vyhodí {@link com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException}.
+     * </p>
+     *
+     * @param cardNumber číslo karty
+     * @return Optional s nalezeným uživatelem nebo prázdné, pokud karta není přiřazena
+     */
+    Optional<User> findUserByCardNumber(Integer cardNumber);
+
 }

@@ -12,6 +12,14 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     Optional<User> findByEmail(String email);
 
     /**
+     * Najde uživatele podle ID karty.
+     *
+     * @param cardID ID karty
+     * @return Optional s nalezeným uživatelem, nebo prázdné pokud karta není přiřazena
+     */
+    Optional<User> findByCardCardID(Integer cardID);
+
+    /**
      * Najde uživatele, jejichž jméno nebo příjmení obsahuje daný výraz (case-insensitive).
      *
      * @param firstname Hledaný výraz v jméně.

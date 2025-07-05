@@ -248,4 +248,12 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public Optional<User> findUserByCardNumber(Integer cardNumber) {
+        var card = cardRepository.findByCardNumber(cardNumber.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Karta ještě není v systému registrována."));
+
+        return userRepository.findByCardCardID(card.getCardID());
+    }
+
 }

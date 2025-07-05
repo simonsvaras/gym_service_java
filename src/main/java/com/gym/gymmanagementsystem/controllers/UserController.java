@@ -175,6 +175,26 @@ public class UserController {
     }
 
     /**
+     * Získá uživatele podle čísla karty.
+     *
+     * @param cardNumber číslo karty
+     * @return ResponseEntity s UserDTO nebo varovnou zprávou, pokud karta není přiřazena
+     *
+     * @getMapping("/byCardNumber/{cardNumber}")
+     */
+    @GetMapping("/byCardNumber/{cardNumber}")
+    public ResponseEntity<?> getUserByCardNumber(@PathVariable Integer cardNumber) {
+        Optional<User> userOpt = userService.findUserByCardNumber(cardNumber);
+        if (userOpt.isEmpty()) {
+            Map<String, String> body = new HashMap<>();
+            body.put("warning", "Karta není přiřazena žádnému uživateli");
+            return ResponseEntity.status(HttpStatus.OK).body(body);
+        }
+        UserDto dto = mapper.toDto(userOpt.get());
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
      * Nahraje profilovou fotku uživatele.
      *
      * @param id   ID uživatele, jehož fotku nahráváme.
