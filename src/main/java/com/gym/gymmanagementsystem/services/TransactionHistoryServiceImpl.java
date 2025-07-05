@@ -7,6 +7,8 @@ import com.gym.gymmanagementsystem.repositories.TransactionHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,5 +66,10 @@ public class TransactionHistoryServiceImpl implements TransactionHistoryService 
     @Override
     public List<TransactionHistory> findByPurchaseType(String purchaseType) {
         return transactionHistoryRepository.findByPurchaseType(purchaseType);
+    }
+
+    @Override
+    public List<TransactionHistory> getTransactionsInRange(LocalDateTime start, LocalDateTime end) {
+        return transactionHistoryRepository.findByTransactionDateBetween(start, end);
     }
 }

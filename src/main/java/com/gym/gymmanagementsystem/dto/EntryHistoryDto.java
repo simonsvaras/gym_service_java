@@ -19,5 +19,6 @@ public class EntryHistoryDto {
     @Size(max = 50, message = "Entry type může mít maximálně 50 znaků")
     private String entryType; // 'Subscription' nebo 'OneTimeEntry'
 
-    // Můžeš přidat další pole nebo vztahy podle potřeby
+    private String firstName;
+    private String lastName;
 }

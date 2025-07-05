@@ -7,7 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "EntryHistory")
+@Table(name = "Entryhistory")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,9 +21,9 @@ public class EntryHistory {
     @JoinColumn(name = "UserID")
     private User user;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "entrydate", nullable = false, updatable = false)
     private LocalDateTime entryDate = LocalDateTime.now();
 
-    @Column(length = 50)
+    @Column(name = "entrytype", length = 50)
     private String entryType; // 'Subscription' nebo 'OneTimeEntry'
 }

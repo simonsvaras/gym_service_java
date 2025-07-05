@@ -44,6 +44,8 @@ public class EntryHistoryMapper {
 
         if (entryHistory.getUser() != null) {
             dto.setUserID(entryHistory.getUser().getUserID());
+            dto.setFirstName(entryHistory.getUser().getFirstname());
+            dto.setLastName(entryHistory.getUser().getLastname());
         }
 
         dto.setEntryDate(entryHistory.getEntryDate());

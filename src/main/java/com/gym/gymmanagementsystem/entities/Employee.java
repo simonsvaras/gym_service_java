@@ -17,21 +17,21 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idEmployee;
 
-    @Column(length = 100, nullable = false)
+    @Column(name = "username",length = 100, nullable = false)
     private String username;
 
-    @Column(length = 100, nullable = false)
+    @Column(name = "firstname", length = 100, nullable = false)
     private String firstname;
 
-    @Column(length = 100, nullable = false)
+    @Column(name = "lastname", length = 100, nullable = false)
     private String lastname;
 
-    @Column(length = 255, nullable = false)
+    @Column(name = "password", length = 255, nullable = false)
     private String password;
 
-    @Column(length = 15)
+    @Column(name = "role", length = 15)
     private String role;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "createdat", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

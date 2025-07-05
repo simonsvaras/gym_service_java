@@ -32,5 +32,6 @@ public class TransactionHistoryDto {
     private Integer userSubscriptionID;
     private Integer oneTimeEntryID;
 
-    // Můžeš přidat další pole nebo vztahy podle potřeby
+    private String lastName;
+    private String firstName;
 }

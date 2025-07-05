@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "TransactionHistory")
+@Table(name = "Transactionhistory")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,23 +21,23 @@ public class TransactionHistory {
     @JoinColumn(name = "UserID")
     private User user;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "transactiondate", nullable = false, updatable = false)
     private LocalDateTime transactionDate = LocalDateTime.now();
 
-    @Column(precision = 10, scale = 2, nullable = false)
+    @Column(name = "amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
 
-    @Column(length = 255)
+    @Column(name = "description", length = 255)
     private String description;
 
-    @Column(length = 50)
+    @Column(name = "purchasetype", length = 50)
     private String purchaseType; // 'Subscription' nebo 'OneTimeEntry'
 
     @ManyToOne
-    @JoinColumn(name = "UserSubscriptionID")
+    @JoinColumn(name = "usersubscriptionID")
     private UserSubscription userSubscription;
 
     @ManyToOne
-    @JoinColumn(name = "OneTimeEntryID")
+    @JoinColumn(name = "onetimeentryid")
     private UserOneTimeEntry oneTimeEntry;
 }

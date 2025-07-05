@@ -66,6 +66,9 @@ public class TransactionHistoryMapper {
 
         if (transactionHistory.getUser() != null) {
             dto.setUserID(transactionHistory.getUser().getUserID());
+            dto.setFirstName(transactionHistory.getUser().getFirstname());
+            dto.setLastName(transactionHistory.getUser().getLastname());
+
         }
 
         dto.setTransactionDate(transactionHistory.getTransactionDate());

@@ -17,12 +17,13 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer cardID;
 
-    @Column(length = 50, unique = true, nullable = false)
+    @Column(name = "cardnumber",length = 50, unique = true, nullable = false)
     private String cardNumber;
 
+    @Column(name = "lost")
     private Boolean lost;
 
-    @Column(length = 50)
+    @Column(name = "cardtype",length = 50)
     private String cardType;
 
     // Vztah s uživatelem (jedna karta může patřit jednomu uživateli)
