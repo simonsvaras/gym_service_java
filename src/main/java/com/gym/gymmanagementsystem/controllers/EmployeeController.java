@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
+
+    private static final Logger log = LoggerFactory.getLogger(EmployeeController.class);
 
     private final EmployeeService employeeService;
 
@@ -47,10 +51,12 @@ public class EmployeeController {
      */
     @GetMapping
     public ResponseEntity<List<EmployeeDto>> getAllEmployees() {
+        log.info("GET /api/employees");
         List<Employee> employees = employeeService.getAllEmployees();
         List<EmployeeDto> employeeDtos = employees.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} zaměstnanců", employeeDtos.size());
         return ResponseEntity.ok(employeeDtos);
     }
 
@@ -64,9 +70,11 @@ public class EmployeeController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Integer id) {
+        log.info("GET /api/employees/{}", id);
         Employee employee = employeeService.getEmployeeById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nenalezen s ID " + id));
         EmployeeDto dto = mapper.toDto(employee);
+        log.debug("Zaměstnanec {} nalezen", id);
         return ResponseEntity.ok(dto);
     }
 
@@ -80,12 +88,11 @@ public class EmployeeController {
      */
     @PostMapping
     public ResponseEntity<EmployeeDto> createEmployee(@Valid @RequestBody EmployeeDto employeeDto) {
-        // Logování přijatého EmployeeDto místo System.out.println
-        // Doporučuje se použít Logger místo System.out.println
-        // logger.info("Přijatý EmployeeDto: {}", employeeDto);
+        log.info("POST /api/employees - {}", employeeDto);
         Employee employee = mapper.toEntity(employeeDto);
         Employee createdEmployee = employeeService.createEmployee(employee);
         EmployeeDto createdDto = mapper.toDto(createdEmployee);
+        log.debug("Zaměstnanec vytvořen s ID {}", createdEmployee.getIdEmployee());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
     }
 
@@ -101,9 +108,11 @@ public class EmployeeController {
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Integer id,
                                                       @Valid @RequestBody EmployeeDto employeeDto) {
+        log.info("PUT /api/employees/{} - {}", id, employeeDto);
         Employee employeeDetails = mapper.toEntity(employeeDto);
         Employee updatedEmployee = employeeService.updateEmployee(id, employeeDetails);
         EmployeeDto updatedDto = mapper.toDto(updatedEmployee);
+        log.debug("Zaměstnanec {} aktualizován", id);
         return ResponseEntity.ok(updatedDto);
     }
 
@@ -117,7 +126,9 @@ public class EmployeeController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Integer id) {
+        log.info("DELETE /api/employees/{}", id);
         employeeService.deleteEmployee(id);
+        log.debug("Zaměstnanec {} smazán", id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 }

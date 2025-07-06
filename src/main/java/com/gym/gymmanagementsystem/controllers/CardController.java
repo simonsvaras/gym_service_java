@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/cards")
 public class CardController {
+
+    private static final Logger log = LoggerFactory.getLogger(CardController.class);
 
     private final CardService cardService;
 
@@ -47,10 +51,12 @@ public class CardController {
      */
     @GetMapping
     public ResponseEntity<List<CardDto>> getAllCards() {
+        log.info("GET /api/cards");
         List<Card> cards = cardService.getAllCards();
         List<CardDto> cardDtos = cards.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} karet", cardDtos.size());
         return ResponseEntity.ok(cardDtos);
     }
 
@@ -64,9 +70,11 @@ public class CardController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<CardDto> getCardById(@PathVariable Integer id) {
+        log.info("GET /api/cards/{}", id);
         Card card = cardService.getCardById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Karta nenalezena s ID " + id));
         CardDto dto = mapper.toDto(card);
+        log.debug("Karta {} nalezena", id);
         return ResponseEntity.ok(dto);
     }
 
@@ -80,9 +88,11 @@ public class CardController {
      */
     @PostMapping
     public ResponseEntity<CardDto> createCard(@Valid @RequestBody CardDto cardDto) {
+        log.info("POST /api/cards - {}", cardDto);
         Card card = mapper.toEntity(cardDto);
         Card createdCard = cardService.createCard(card);
         CardDto createdDto = mapper.toDto(createdCard);
+        log.debug("Karta vytvořena s ID {}", createdCard.getCardID());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
     }
 
@@ -98,9 +108,11 @@ public class CardController {
     @PutMapping("/{id}")
     public ResponseEntity<CardDto> updateCard(@PathVariable Integer id,
                                               @Valid @RequestBody CardDto cardDto) {
+        log.info("PUT /api/cards/{} - {}", id, cardDto);
         Card cardDetails = mapper.toEntity(cardDto);
         Card updatedCard = cardService.updateCard(id, cardDetails);
         CardDto updatedDto = mapper.toDto(updatedCard);
+        log.debug("Karta {} aktualizována", id);
         return ResponseEntity.ok(updatedDto);
     }
 
@@ -114,7 +126,9 @@ public class CardController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCard(@PathVariable Integer id) {
+        log.info("DELETE /api/cards/{}", id);
         cardService.deleteCard(id);
+        log.debug("Karta {} smazána", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -128,9 +142,11 @@ public class CardController {
      */
     @GetMapping("/byNumber/{cardNumber}")
     public ResponseEntity<CardDto> getCardByNumber(@PathVariable String cardNumber) {
+        log.info("GET /api/cards/byNumber/{}", cardNumber);
         Card card = cardService.findByCardNumber(cardNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Karta nenalezena s číslem " + cardNumber));
         CardDto dto = mapper.toDto(card);
+        log.debug("Karta {} nalezena", cardNumber);
         return ResponseEntity.ok(dto);
     }
 }

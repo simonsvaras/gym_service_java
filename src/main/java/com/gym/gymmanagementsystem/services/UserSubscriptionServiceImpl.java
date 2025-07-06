@@ -10,6 +10,8 @@ import com.gym.gymmanagementsystem.repositories.UserSubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,6 +21,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UserSubscriptionServiceImpl implements UserSubscriptionService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserSubscriptionServiceImpl.class);
 
     @Autowired
     private UserSubscriptionRepository userSubscriptionRepository;
@@ -52,6 +56,8 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
             LocalDate customEndDate,
             BigDecimal customPrice
     ) {
+        log.info("Vytvářím předplatné pro uživatele {} plán {} customEndDate={} customPrice={}",
+                request.getUser().getUserID(), request.getSubscription().getSubscriptionID(), customEndDate, customPrice);
         LocalDate today = LocalDate.now();
         Integer userId = request.getUser().getUserID();
         Subscription plan = request.getSubscription();
@@ -60,6 +66,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
         UserSubscription currentActive = findActiveValidSubscription(userId);
 
         if (currentActive != null) {
+            log.debug("Uživatel má aktivní předplatné, prodlužuji");
             // 2) Pokud uživatel má aktivní předplatné, prodloužíme ho nebo nastavíme customEndDate.
             //    a) z původního endDate (nebo dnešního data, pokud endDate chybí) vypočteme newEnd
             LocalDate oldEnd = Optional.ofNullable(currentActive.getEndDate()).orElse(today);
@@ -92,6 +99,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
         deactivateActiveSubscription(userId);
 
         //    b) vytvoříme nové s startDate = dnes a endDate = customEndDate nebo dnes + durationMonths
+        log.debug("Vytvářím nové předplatné");
         UserSubscription fresh = new UserSubscription();
         fresh.setUser(request.getUser());
         fresh.setSubscription(plan);
@@ -117,11 +125,13 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
         }
         transactionHistoryRepository.save(txNew);
 
+        log.info("Nové předplatné uloženo s ID {}", saved.getUserSubscriptionID());
         return saved;
     }
 
     @Override
     public UserSubscription updateUserSubscription(Integer id, UserSubscription userSubscriptionDetails) {
+        log.info("Aktualizuji předplatné id={}", id);
         return userSubscriptionRepository.findById(id)
                 .map(existing -> {
                     existing.setUser(userSubscriptionDetails.getUser());
@@ -130,25 +140,31 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
                     existing.setEndDate(userSubscriptionDetails.getEndDate());
                     existing.setIsActive(userSubscriptionDetails.getIsActive());
                     // Další pole...
-                    return userSubscriptionRepository.save(existing);
+                    UserSubscription us = userSubscriptionRepository.save(existing);
+                    log.debug("Předplatné {} aktualizováno", id);
+                    return us;
                 }).orElseThrow(() ->
                         new ResourceNotFoundException("UserSubscription not found with id " + id));
     }
 
     @Override
     public void deleteUserSubscription(Integer id) {
+        log.info("Mažu předplatné id={}", id);
         UserSubscription sub = userSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UserSubscription not found with id " + id));
         userSubscriptionRepository.delete(sub);
+        log.debug("Předplatné {} smazáno", id);
     }
 
     @Override
     public List<UserSubscription> findByUserId(Integer userId) {
+        log.info("Hledám předplatné pro uživatele {}", userId);
         return userSubscriptionRepository.findByUserUserID(userId);
     }
 
     @Override
     public List<UserSubscription> findActiveSubscriptions() {
+        log.info("Hledám aktivní předplatná");
         return userSubscriptionRepository.findByIsActiveTrue();
     }
 

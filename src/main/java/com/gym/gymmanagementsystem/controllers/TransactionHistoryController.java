@@ -10,6 +10,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
 
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/transaction-history")
 public class TransactionHistoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionHistoryController.class);
 
     private final TransactionHistoryService transactionHistoryService;
 
@@ -50,10 +54,12 @@ public class TransactionHistoryController {
      */
     @GetMapping
     public ResponseEntity<List<TransactionHistoryDto>> getAllTransactionHistories() {
+        log.info("GET /api/transaction-history");
         List<TransactionHistory> histories = transactionHistoryService.getAllTransactionHistories();
         List<TransactionHistoryDto> historyDtos = histories.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} transakcí", historyDtos.size());
         return ResponseEntity.ok(historyDtos);
     }
 
@@ -67,9 +73,11 @@ public class TransactionHistoryController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<TransactionHistoryDto> getTransactionHistoryById(@PathVariable Integer id) {
+        log.info("GET /api/transaction-history/{}", id);
         TransactionHistory history = transactionHistoryService.getTransactionHistoryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TransactionHistory nenalezena s ID " + id));
         TransactionHistoryDto dto = mapper.toDto(history);
+        log.debug("Transakce {} nalezena", id);
         return ResponseEntity.ok(dto);
     }
 
@@ -87,10 +95,12 @@ public class TransactionHistoryController {
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
     ) {
+        log.info("GET /api/transaction-history/range start={} end={}", start, end);
         List<TransactionHistory> records = transactionHistoryService.getTransactionsInRange(start, end);
         List<TransactionHistoryDto> dtos = records.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} transakcí", dtos.size());
         return ResponseEntity.ok(dtos);
     }
 
@@ -104,9 +114,11 @@ public class TransactionHistoryController {
      */
     @PostMapping
     public ResponseEntity<TransactionHistoryDto> createTransactionHistory(@Valid @RequestBody TransactionHistoryDto transactionHistoryDto) {
+        log.info("POST /api/transaction-history - {}", transactionHistoryDto);
         TransactionHistory transactionHistory = mapper.toEntity(transactionHistoryDto);
         TransactionHistory created = transactionHistoryService.createTransactionHistory(transactionHistory);
         TransactionHistoryDto createdDto = mapper.toDto(created);
+        log.debug("Transakce vytvořena s ID {}", created.getTransactionID());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
     }
 
@@ -122,9 +134,11 @@ public class TransactionHistoryController {
     @PutMapping("/{id}")
     public ResponseEntity<TransactionHistoryDto> updateTransactionHistory(@PathVariable Integer id,
                                                                           @Valid @RequestBody TransactionHistoryDto transactionHistoryDto) {
+        log.info("PUT /api/transaction-history/{} - {}", id, transactionHistoryDto);
         TransactionHistory transactionHistoryDetails = mapper.toEntity(transactionHistoryDto);
         TransactionHistory updated = transactionHistoryService.updateTransactionHistory(id, transactionHistoryDetails);
         TransactionHistoryDto updatedDto = mapper.toDto(updated);
+        log.debug("Transakce {} aktualizována", id);
         return ResponseEntity.ok(updatedDto);
     }
 
@@ -138,7 +152,9 @@ public class TransactionHistoryController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransactionHistory(@PathVariable Integer id) {
+        log.info("DELETE /api/transaction-history/{}", id);
         transactionHistoryService.deleteTransactionHistory(id);
+        log.debug("Transakce {} smazána", id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 
@@ -152,10 +168,12 @@ public class TransactionHistoryController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TransactionHistoryDto>> findByUserId(@PathVariable Integer userId) {
+        log.info("GET /api/transaction-history/user/{}", userId);
         List<TransactionHistory> results = transactionHistoryService.findByUserId(userId);
         List<TransactionHistoryDto> resultDtos = results.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} transakcí", resultDtos.size());
         return ResponseEntity.ok(resultDtos);
     }
 
@@ -169,10 +187,12 @@ public class TransactionHistoryController {
      */
     @GetMapping("/purchaseType/{purchaseType}")
     public ResponseEntity<List<TransactionHistoryDto>> findByPurchaseType(@PathVariable String purchaseType) {
+        log.info("GET /api/transaction-history/purchaseType/{}", purchaseType);
         List<TransactionHistory> results = transactionHistoryService.findByPurchaseType(purchaseType);
         List<TransactionHistoryDto> resultDtos = results.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} transakcí", resultDtos.size());
         return ResponseEntity.ok(resultDtos);
     }
 
