@@ -16,6 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,6 +31,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -49,16 +53,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
+        log.info("Vytvářím uživatele: {}", user);
         // Kontrola, zda už e-mail existuje
         Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
         if (existingUser.isPresent()) {
             throw new ResourceAlreadyExistsException("Uživatel s emailem " + user.getEmail() + " již existuje");
         }
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.debug("Uživatel uložen s ID {}", saved.getUserID());
+        return saved;
     }
 
     @Override
     public User updateUser(Integer id, User userDetails) {
+        log.info("Aktualizuji uživatele id={}", id);
         return userRepository.findById(id)
                 .map(user -> {
                     user.setFirstname(userDetails.getFirstname());
@@ -69,15 +77,19 @@ public class UserServiceImpl implements UserService {
                     user.setProfilePhoto(userDetails.getProfilePhoto());
                     user.setRealUser(userDetails.getRealUser());
                     // Aktualizujte další pole podle potřeby
-                    return userRepository.save(user);
+                    User u = userRepository.save(user);
+                    log.debug("Uživatel {} aktualizován", id);
+                    return u;
                 }).orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
     }
 
     @Override
     public void deleteUser(Integer id) {
+        log.info("Mažu uživatele id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
         userRepository.delete(user);
+        log.debug("Uživatel {} smazán", id);
     }
 
     @Override
@@ -87,6 +99,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String uploadProfilePicture(Integer userId, MultipartFile file) {
+        log.info("Nahrávám profilovou fotku pro uživatele {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
 
@@ -98,6 +111,17 @@ public class UserServiceImpl implements UserService {
             // 1) Zajistit existenci složky
             Path uploadPath = Paths.get(uploadDir);
             Files.createDirectories(uploadPath);
+
+            // případné smazání staré fotky
+            if (user.getProfilePhoto() != null && !user.getProfilePhoto().isEmpty()) {
+                Path oldPath = uploadPath.resolve(user.getProfilePhoto());
+                log.debug("Mažu starou fotku {}", oldPath);
+                try {
+                    Files.deleteIfExists(oldPath);
+                } catch (IOException ex) {
+                    log.warn("Nepodařilo se smazat starou fotku {}: {}", oldPath, ex.getMessage());
+                }
+            }
 
             // 2) Vygenerovat unikátní název souboru
             String originalFilename = file.getOriginalFilename();
@@ -117,9 +141,11 @@ public class UserServiceImpl implements UserService {
             user.setProfilePhoto(uniqueFilename);
             userRepository.save(user);
 
+            log.info("Fotka uživatele {} uložena jako {}", userId, uniqueFilename);
             return uniqueFilename; // nebo "profile-photos/" + uniqueFilename
 
         } catch (IOException e) {
+            log.error("Chyba při ukládání fotky", e);
             throw new RuntimeException("Chyba při ukládání souboru: " + e.getMessage(), e);
         }
     }
@@ -227,6 +253,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void assignCardToUser(Integer userId, String cardNumber) {
+        log.info("Přiřazuji kartu {} uživateli {}", cardNumber, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
 
@@ -238,6 +265,7 @@ public class UserServiceImpl implements UserService {
         });
 
         if (card.getUser() != null && !card.getUser().getUserID().equals(userId)) {
+            log.warn("Karta {} již náleží jinému uživateli {}", cardNumber, card.getUser().getUserID());
             throw new ResourceAlreadyExistsException("Daná karta je již přiřazena jinému uživateli");
         }
 
@@ -246,6 +274,7 @@ public class UserServiceImpl implements UserService {
         // save both sides
         cardRepository.save(card);
         userRepository.save(user);
+        log.info("Karta {} úspěšně přiřazena uživateli {}", cardNumber, userId);
     }
 
     @Override

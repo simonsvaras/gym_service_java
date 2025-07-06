@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/user-one-time-entries")
 public class UserOneTimeEntryController {
+
+    private static final Logger log = LoggerFactory.getLogger(UserOneTimeEntryController.class);
 
     private final UserOneTimeEntryService userOneTimeEntryService;
 
@@ -49,10 +53,12 @@ public class UserOneTimeEntryController {
      */
     @GetMapping
     public ResponseEntity<List<UserOneTimeEntryDto>> getAllUserOneTimeEntries() {
+        log.info("GET /api/user-one-time-entries");
         List<UserOneTimeEntry> entries = userOneTimeEntryService.getAllUserOneTimeEntries();
         List<UserOneTimeEntryDto> entryDtos = entries.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} záznamů", entryDtos.size());
         return ResponseEntity.ok(entryDtos);
     }
 
@@ -66,9 +72,11 @@ public class UserOneTimeEntryController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserOneTimeEntryDto> getUserOneTimeEntryById(@PathVariable Integer id) {
+        log.info("GET /api/user-one-time-entries/{}", id);
         UserOneTimeEntry entry = userOneTimeEntryService.getUserOneTimeEntryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UserOneTimeEntry nenalezen s ID " + id));
         UserOneTimeEntryDto dto = mapper.toDto(entry);
+        log.debug("Jednorázový vstup uživatele {} nalezen", id);
         return ResponseEntity.ok(dto);
     }
 
@@ -83,6 +91,7 @@ public class UserOneTimeEntryController {
     public ResponseEntity<List<UserOneTimeEntryDto>> createUserOneTimeEntries(
             @Valid @RequestBody UserOneTimeEntryDto userOneTimeEntryDto,
             @RequestParam(value = "count", defaultValue = "1") int count) {
+        log.info("POST /api/user-one-time-entries count={} - {}", count, userOneTimeEntryDto);
 
         List<UserOneTimeEntryDto> createdDtos = new ArrayList<>();
 
@@ -93,6 +102,7 @@ public class UserOneTimeEntryController {
             createdDtos.add(createdDto);
         }
 
+        log.debug("Vytvořeno {} záznamů", createdDtos.size());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDtos);
     }
 
@@ -108,9 +118,11 @@ public class UserOneTimeEntryController {
     @PutMapping("/{id}")
     public ResponseEntity<UserOneTimeEntryDto> updateUserOneTimeEntry(@PathVariable Integer id,
                                                                       @Valid @RequestBody UserOneTimeEntryDto entryDto) {
+        log.info("PUT /api/user-one-time-entries/{} - {}", id, entryDto);
         UserOneTimeEntry entryDetails = mapper.toEntity(entryDto);
         UserOneTimeEntry updated = userOneTimeEntryService.updateUserOneTimeEntry(id, entryDetails);
         UserOneTimeEntryDto updatedDto = mapper.toDto(updated);
+        log.debug("Jednorázový vstup uživatele {} aktualizován", id);
         return ResponseEntity.ok(updatedDto);
     }
 
@@ -124,7 +136,9 @@ public class UserOneTimeEntryController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserOneTimeEntry(@PathVariable Integer id) {
+        log.info("DELETE /api/user-one-time-entries/{}", id);
         userOneTimeEntryService.deleteUserOneTimeEntry(id);
+        log.debug("Jednorázový vstup uživatele {} smazán", id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 
@@ -138,10 +152,12 @@ public class UserOneTimeEntryController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<UserOneTimeEntryDto>> findByUserId(@PathVariable Integer userId) {
+        log.info("GET /api/user-one-time-entries/user/{}", userId);
         List<UserOneTimeEntry> entries = userOneTimeEntryService.findByUserId(userId);
         List<UserOneTimeEntryDto> entryDtos = entries.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} záznamů", entryDtos.size());
         return ResponseEntity.ok(entryDtos);
     }
 
@@ -154,10 +170,12 @@ public class UserOneTimeEntryController {
      */
     @GetMapping("/unused")
     public ResponseEntity<List<UserOneTimeEntryDto>> findUnusedEntries() {
+        log.info("GET /api/user-one-time-entries/unused");
         List<UserOneTimeEntry> unused = userOneTimeEntryService.findUnusedEntries();
         List<UserOneTimeEntryDto> entryDtos = unused.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} nevyužitých záznamů", entryDtos.size());
         return ResponseEntity.ok(entryDtos);
     }
 }

@@ -8,12 +8,16 @@ import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @Transactional
 public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserOneTimeEntryServiceImpl.class);
 
     @Autowired
     private UserOneTimeEntryRepository userOneTimeEntryRepository;
@@ -23,19 +27,23 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
 
     @Override
     public List<UserOneTimeEntry> getAllUserOneTimeEntries() {
-        return userOneTimeEntryRepository.findAll();
+        log.info("Načítám jednorázové vstupy uživatelů");
+        List<UserOneTimeEntry> list = userOneTimeEntryRepository.findAll();
+        log.debug("Nalezeno {} záznamů", list.size());
+        return list;
     }
 
     @Override
     public Optional<UserOneTimeEntry> getUserOneTimeEntryById(Integer id) {
+        log.info("Hledám jednorázový vstup uživatele id={}", id);
         return userOneTimeEntryRepository.findById(id);
     }
 
     @Override
     public UserOneTimeEntry createUserOneTimeEntry(UserOneTimeEntry userOneTimeEntry) {
-        // Uložení nového jednorázového předplatného
+        log.info("Vytvářím jednorázový vstup uživatele: {}", userOneTimeEntry);
         UserOneTimeEntry createdEntry = userOneTimeEntryRepository.save(userOneTimeEntry);
-
+        
         // Vytvoření a uložení záznamu transakce
         TransactionHistory transaction = new TransactionHistory();
         transaction.setUser(createdEntry.getUser()); // Předpokládáme, že UserOneTimeEntry má referenci na User
@@ -47,11 +55,13 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
 
         transactionHistoryService.createTransactionHistory(transaction);
 
+        log.debug("Jednorázový vstup uložen s ID {}", createdEntry.getUserOneTimeEntryID());
         return createdEntry;
     }
 
     @Override
     public UserOneTimeEntry updateUserOneTimeEntry(Integer id, UserOneTimeEntry userOneTimeEntryDetails) {
+        log.info("Aktualizuji jednorázový vstup uživatele id={}", id);
         return userOneTimeEntryRepository.findById(id)
                 .map(userOneTimeEntry -> {
                     userOneTimeEntry.setUser(userOneTimeEntryDetails.getUser());
@@ -59,24 +69,30 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
                     userOneTimeEntry.setPurchaseDate(userOneTimeEntryDetails.getPurchaseDate());
                     userOneTimeEntry.setIsUsed(userOneTimeEntryDetails.getIsUsed());
                     // Aktualizujte další pole podle potřeby
-                    return userOneTimeEntryRepository.save(userOneTimeEntry);
+                    UserOneTimeEntry e = userOneTimeEntryRepository.save(userOneTimeEntry);
+                    log.debug("Jednorázový vstup {} aktualizován", id);
+                    return e;
                 }).orElseThrow(() -> new ResourceNotFoundException("UserOneTimeEntry not found with id " + id));
     }
 
     @Override
     public void deleteUserOneTimeEntry(Integer id) {
+        log.info("Mažu jednorázový vstup uživatele id={}", id);
         UserOneTimeEntry userOneTimeEntry = userOneTimeEntryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UserOneTimeEntry not found with id " + id));
         userOneTimeEntryRepository.delete(userOneTimeEntry);
+        log.debug("Jednorázový vstup {} smazán", id);
     }
 
     @Override
     public List<UserOneTimeEntry> findByUserId(Integer userId) {
+        log.info("Hledám jednorázové vstupy pro uživatele {}", userId);
         return userOneTimeEntryRepository.findByUserUserID(userId);
     }
 
     @Override
     public List<UserOneTimeEntry> findUnusedEntries() {
+        log.info("Hledám nevyužité jednorázové vstupy");
         return userOneTimeEntryRepository.findByIsUsedFalse();
     }
 }

@@ -7,12 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 1) ResourceNotFoundException -> 404
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -25,6 +29,7 @@ public class GlobalExceptionHandler {
     // 2) Validace: MethodArgumentNotValidException -> 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        log.debug("Validace selhala: {}", ex.getBindingResult());
         Map<String, String> errors = new HashMap<>();
 
         // Získat všechny field errors a uložit do mapy: "pole" : "chybová hláška"
@@ -52,6 +57,7 @@ public class GlobalExceptionHandler {
     // Obecné chyby -> 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
+        log.error("Nezachycená výjimka", ex);
         Map<String, String> errorBody = new HashMap<>();
         errorBody.put("error", "Internal Server Error: " + ex.getMessage());
         // V produkci raději nevystavuj ex.getMessage() naplno,

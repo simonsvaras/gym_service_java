@@ -23,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
 
@@ -75,6 +79,7 @@ public class UserController {
      */
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam(required = false) String searchTerm) {
+        log.info("GET /api/users searchTerm={}", searchTerm);
         List<User> users;
         if (searchTerm != null && !searchTerm.trim().isEmpty()) {
             users = userService.searchUsers(searchTerm);
@@ -84,6 +89,7 @@ public class UserController {
         List<UserDto> userDtos = users.stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
+        log.debug("Vráceno {} uživatelů", userDtos.size());
         return ResponseEntity.ok(userDtos);
     }
 
@@ -97,9 +103,11 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Integer id) {
+        log.info("GET /api/users/{}", id);
         User user = userService.getUserById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Uživatel nenalezen s ID " + id));
         UserDto dto = mapper.toDto(user);
+        log.debug("Uživatel {} nalezen", id);
         return ResponseEntity.ok(dto);
     }
 
@@ -113,8 +121,7 @@ public class UserController {
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody UserDto userDto) {
-        // Logování přijatého UserDto místo System.out.println
-        System.out.println("Přijatý UserDto: " + userDto);
+        log.info("POST /api/users - {}", userDto);
 
         User user = mapper.toEntity(userDto);
         User createdUser = userService.createUser(user);
@@ -122,6 +129,8 @@ public class UserController {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("id", createdUser.getUserID());
         responseMap.put("message", "Uživatel vytvořen");
+
+        log.debug("Uživatel vytvořen s ID {}", createdUser.getUserID());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseMap);
     }
@@ -138,9 +147,11 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Integer id,
                                               @Valid @RequestBody UserDto userDto) {
+        log.info("PUT /api/users/{} - {}", id, userDto);
         User userDetails = mapper.toEntity(userDto);
         User updatedUser = userService.updateUser(id, userDetails);
         UserDto updatedDto = mapper.toDto(updatedUser);
+        log.debug("Uživatel {} aktualizován", id);
         return ResponseEntity.ok(updatedDto);
     }
 
@@ -154,7 +165,9 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        log.info("DELETE /api/users/{}", id);
         userService.deleteUser(id);
+        log.debug("Uživatel {} smazán", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -168,9 +181,11 @@ public class UserController {
      */
     @GetMapping("/byEmail/{email}")
     public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
+        log.info("GET /api/users/byEmail/{}", email);
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Uživatel nenalezen s emailem " + email));
         UserDto dto = mapper.toDto(user);
+        log.debug("Uživatel s emailem {} nalezen", email);
         return ResponseEntity.ok(dto);
     }
 
@@ -184,13 +199,16 @@ public class UserController {
      */
     @GetMapping("/byCardNumber/{cardNumber}")
     public ResponseEntity<?> getUserByCardNumber(@PathVariable Integer cardNumber) {
+        log.info("GET /api/users/byCardNumber/{}", cardNumber);
         Optional<User> userOpt = userService.findUserByCardNumber(cardNumber);
         if (userOpt.isEmpty()) {
             Map<String, String> body = new HashMap<>();
             body.put("warning", "Karta není přiřazena žádnému uživateli");
+            log.warn("Karta {} není přiřazena žádnému uživateli", cardNumber);
             return ResponseEntity.status(HttpStatus.OK).body(body);
         }
         UserDto dto = mapper.toDto(userOpt.get());
+        log.debug("Uživatel pro kartu {} nalezen", cardNumber);
         return ResponseEntity.ok(dto);
     }
 
@@ -207,15 +225,18 @@ public class UserController {
     public ResponseEntity<String> uploadProfilePicture(
             @PathVariable Integer id,
             @RequestParam("profilePicture") MultipartFile file) {
-
+        log.info("POST /api/users/{}/uploadProfilePicture - filename={}", id, file.getOriginalFilename());
         String uniqueFilename = userService.uploadProfilePicture(id, file);
+        log.debug("Profilová fotka uložena jako {}", uniqueFilename);
         return ResponseEntity.ok("Profilová fotka nahrána. Soubor: " + uniqueFilename);
     }
 
     @GetMapping("/{id}/profilePhoto")
     public ResponseEntity<Resource> getProfilePhoto(@PathVariable Integer id) {
-        // Zavoláme servis
+        log.info("GET /api/users/{}/profilePhoto", id);
         FileResourceData fileData = userService.loadProfilePicture(id);
+
+        log.debug("Profilová fotka {} načtena", fileData.getResource().getFilename());
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(fileData.getContentType()))
@@ -236,7 +257,9 @@ public class UserController {
     public ResponseEntity<String> assignCardToUser(
             @PathVariable Integer userId,
             @Valid @RequestBody AssignCardRequest request) {
+        log.info("POST /api/users/{}/assignCard cardNumber={}", userId, request.getCardNumber());
         userService.assignCardToUser(userId, request.getCardNumber());
+        log.debug("Karta {} přiřazena uživateli {}", request.getCardNumber(), userId);
         return ResponseEntity.ok("Karta přiřazena");
     }
 
@@ -266,7 +289,8 @@ public class UserController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime entryEnd,
             @RequestParam(value = "minEntryCount", required = false) Integer minEntryCount,
             @RequestParam(value = "subscriptionStatus", required = false) String subscriptionStatus) {
-
+        log.info("GET /api/users/detailed entryStart={} entryEnd={} minEntryCount={} subscriptionStatus={}",
+                entryStart, entryEnd, minEntryCount, subscriptionStatus);
         // Voláme novou metodu service, která zohlední předané filtry.
         List<User> users = userService.getFilteredUsers(entryStart, entryEnd, minEntryCount, subscriptionStatus);
 
@@ -297,6 +321,7 @@ public class UserController {
 
             detailedList.add(dto);
         }
+        log.debug("Vráceno {} detailních záznamů", detailedList.size());
         return ResponseEntity.ok(detailedList);
     }
 
