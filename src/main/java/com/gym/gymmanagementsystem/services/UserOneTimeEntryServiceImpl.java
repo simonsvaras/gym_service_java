@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,14 +41,14 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
     }
 
     @Override
-    public UserOneTimeEntry createUserOneTimeEntry(UserOneTimeEntry userOneTimeEntry) {
-        log.info("Vytvářím jednorázový vstup uživatele: {}", userOneTimeEntry);
+    public UserOneTimeEntry createUserOneTimeEntry(UserOneTimeEntry userOneTimeEntry, BigDecimal customPrice) {
+        log.info("Vytvářím jednorázový vstup uživatele: {} customPrice={}", userOneTimeEntry, customPrice);
         UserOneTimeEntry createdEntry = userOneTimeEntryRepository.save(userOneTimeEntry);
-        
+
         // Vytvoření a uložení záznamu transakce
         TransactionHistory transaction = new TransactionHistory();
         transaction.setUser(createdEntry.getUser()); // Předpokládáme, že UserOneTimeEntry má referenci na User
-        transaction.setAmount(createdEntry.getOneTimeEntry().getPrice()); // Předpokládáme, že OneTimeEntry má cenu
+        transaction.setAmount(customPrice != null ? customPrice : createdEntry.getOneTimeEntry().getPrice());
         transaction.setDescription("Nákup jednorázového vstupu " + createdEntry.getOneTimeEntry().getEntryName());
         transaction.setPurchaseType(createdEntry.getOneTimeEntry().getEntryName());
         transaction.setOneTimeEntry(createdEntry);

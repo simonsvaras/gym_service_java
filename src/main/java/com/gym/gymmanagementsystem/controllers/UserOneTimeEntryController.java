@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,11 +94,29 @@ public class UserOneTimeEntryController {
             @RequestParam(value = "count", defaultValue = "1") int count) {
         log.info("POST /api/user-one-time-entries count={} - {}", count, userOneTimeEntryDto);
 
+        // Podmíněná validace pro oneTimeEntryID = 3
+        if (userOneTimeEntryDto.getOneTimeEntryID() != null && userOneTimeEntryDto.getOneTimeEntryID().equals(3)) {
+            if (userOneTimeEntryDto.getCustomPrice() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Pole customPrice je povinné pro oneTimeEntryID = 3"
+                );
+            }
+        } else {
+            if (userOneTimeEntryDto.getCustomPrice() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "customPrice lze zadat pouze pro oneTimeEntryID = 3"
+                );
+            }
+        }
+
         List<UserOneTimeEntryDto> createdDtos = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
             UserOneTimeEntry userOneTimeEntry = mapper.toEntity(userOneTimeEntryDto);
-            UserOneTimeEntry created = userOneTimeEntryService.createUserOneTimeEntry(userOneTimeEntry);
+            UserOneTimeEntry created = userOneTimeEntryService.createUserOneTimeEntry(
+                    userOneTimeEntry, userOneTimeEntryDto.getCustomPrice());
             UserOneTimeEntryDto createdDto = mapper.toDto(created);
             createdDtos.add(createdDto);
         }
