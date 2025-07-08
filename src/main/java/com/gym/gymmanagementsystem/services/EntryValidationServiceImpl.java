@@ -53,7 +53,9 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             entryHistoryService.createEntryHistory(history);
             EntryStatusMessage msg = new EntryStatusMessage();
             msg.setUserId(String.valueOf(userId));
-            msg.setStatus("OK");
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
+            msg.setStatus("OK_SUBSCRIPTION");
             msg.setExpiryDate(active.getEndDate());
             notifyEntryStatus(msg);
             return new EntryValidationResult(true, "Subscription");
@@ -77,8 +79,10 @@ public class EntryValidationServiceImpl implements EntryValidationService {
                     .filter(e -> !Boolean.TRUE.equals(e.getIsUsed()))
                     .count();
             EntryStatusMessage msg = new EntryStatusMessage();
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
             msg.setUserId(String.valueOf(userId));
-            msg.setStatus("OK");
+            msg.setStatus("OK_ONE_TIME_ENTRY");
             msg.setRemainingEntries((int) remaining);
             notifyEntryStatus(msg);
             return new EntryValidationResult(true, "OneTimeEntry");
@@ -86,7 +90,9 @@ public class EntryValidationServiceImpl implements EntryValidationService {
 
         EntryStatusMessage msg = new EntryStatusMessage();
         msg.setUserId(String.valueOf(userId));
-        msg.setStatus("NO_SUBSCRIPTION");
+        msg.setFirstname(user.getFirstname());
+        msg.setLastname(user.getLastname());
+        msg.setStatus("NO_VALID_ENTRY");
         notifyEntryStatus(msg);
         return new EntryValidationResult(false, null);
     }

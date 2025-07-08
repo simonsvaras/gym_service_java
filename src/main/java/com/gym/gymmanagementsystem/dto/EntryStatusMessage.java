@@ -12,6 +12,10 @@ import java.time.LocalDate;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EntryStatusMessage {
 
+    private String firstname;
+
+    private String lastname;
+
     private String userId;
 
     private String status;
