@@ -53,6 +53,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             entryHistoryService.createEntryHistory(history);
             EntryStatusMessage msg = new EntryStatusMessage();
             msg.setUserId(String.valueOf(userId));
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
             msg.setStatus("OK");
             msg.setExpiryDate(active.getEndDate());
             notifyEntryStatus(msg);
@@ -78,6 +80,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
                     .count();
             EntryStatusMessage msg = new EntryStatusMessage();
             msg.setUserId(String.valueOf(userId));
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
             msg.setStatus("OK");
             msg.setRemainingEntries((int) remaining);
             notifyEntryStatus(msg);
@@ -86,6 +90,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
 
         EntryStatusMessage msg = new EntryStatusMessage();
         msg.setUserId(String.valueOf(userId));
+        msg.setFirstname(user.getFirstname());
+        msg.setLastname(user.getLastname());
         msg.setStatus("NO_SUBSCRIPTION");
         notifyEntryStatus(msg);
         return new EntryValidationResult(false, null);

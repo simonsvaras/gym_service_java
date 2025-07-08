@@ -14,6 +14,12 @@ public class EntryStatusMessage {
 
     private String userId;
 
+    /** jméno uživatele */
+    private String firstname;
+
+    /** příjmení uživatele */
+    private String lastname;
+
     private String status;
 
     private Integer remainingEntries;
