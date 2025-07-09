@@ -126,6 +126,33 @@ public class UserOneTimeEntryController {
     }
 
     /**
+     * Vytvoří jednorázové vstupy pro neregistrovaného uživatele.
+     */
+    @PostMapping("/unregistered")
+    public ResponseEntity<List<UserOneTimeEntryDto>> createForUnregistered(
+            @Valid @RequestBody UserOneTimeEntryDto userOneTimeEntryDto,
+            @RequestParam(value = "count", defaultValue = "1") int count) {
+        log.info("POST /api/user-one-time-entries/unregistered count={} - {}", count, userOneTimeEntryDto);
+
+        if (userOneTimeEntryDto.getCardNumber() == null || userOneTimeEntryDto.getCardNumber().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cardNumber je povinné");
+        }
+
+        if (userOneTimeEntryDto.getOneTimeEntryID() != null && userOneTimeEntryDto.getOneTimeEntryID().equals(3)) {
+            if (userOneTimeEntryDto.getCustomPrice() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pole customPrice je povinné pro oneTimeEntryID = 3");
+            }
+        } else if (userOneTimeEntryDto.getCustomPrice() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "customPrice lze zadat pouze pro oneTimeEntryID = 3");
+        }
+
+        List<UserOneTimeEntry> created = userOneTimeEntryService.createEntriesForUnregistered(userOneTimeEntryDto, count);
+        List<UserOneTimeEntryDto> result = created.stream().map(mapper::toDto).toList();
+        log.debug("Vytvořeno {} záznamů", result.size());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    /**
      * Aktualizuje informace o jednorázovém vstupu uživatele podle jeho ID.
      *
      * @param id               ID jednorázového vstupu uživatele, který chceme aktualizovat.

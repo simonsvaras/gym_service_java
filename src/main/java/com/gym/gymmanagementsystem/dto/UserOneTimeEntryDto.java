@@ -24,5 +24,8 @@ public class UserOneTimeEntryDto {
 
     private BigDecimal customPrice;
 
+    // číslo karty použité při nákupu pro neregistrované uživatele
+    private String cardNumber;
+
     // Můžeš přidat další pole nebo vztahy podle potřeby
 }

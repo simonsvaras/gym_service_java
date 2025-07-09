@@ -280,6 +280,25 @@ public class UserServiceImpl implements UserService {
         log.info("Karta {} úspěšně přiřazena uživateli {}", cardNumber, userId);
     }
 
+    @Override
+    public void unsignCard(Integer userId) {
+        log.info("Odpájím kartu od uživatele {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
+
+        if (user.getCard() == null) {
+            log.warn("Uživatel {} nemá přiřazenou kartu", userId);
+            return;
+        }
+
+        var card = user.getCard();
+        card.setUser(null);
+        user.setCard(null);
+        cardRepository.save(card);
+        userRepository.save(user);
+        log.info("Karta od uživatele {} úspěšně odebrána", userId);
+    }
+
     /**
      * Najde stav karty a případně uživatele.
      *

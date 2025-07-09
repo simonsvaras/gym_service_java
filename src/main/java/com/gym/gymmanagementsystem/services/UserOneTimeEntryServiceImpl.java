@@ -3,8 +3,14 @@ package com.gym.gymmanagementsystem.services;
 
 import com.gym.gymmanagementsystem.entities.TransactionHistory;
 import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
+import com.gym.gymmanagementsystem.entities.User;
+import com.gym.gymmanagementsystem.entities.OneTimeEntry;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
+import com.gym.gymmanagementsystem.repositories.UserRepository;
+import com.gym.gymmanagementsystem.repositories.OneTimeEntryRepository;
+import com.gym.gymmanagementsystem.dto.UserOneTimeEntryDto;
+import com.gym.gymmanagementsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -25,6 +33,15 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
 
     @Autowired
     private TransactionHistoryService transactionHistoryService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private OneTimeEntryRepository oneTimeEntryRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public List<UserOneTimeEntry> getAllUserOneTimeEntries() {
@@ -95,5 +112,46 @@ public class UserOneTimeEntryServiceImpl implements UserOneTimeEntryService {
     public List<UserOneTimeEntry> findUnusedEntries() {
         log.info("Hledám nevyužité jednorázové vstupy");
         return userOneTimeEntryRepository.findByIsUsedFalse();
+    }
+
+    @Override
+    public List<UserOneTimeEntry> createEntriesForUnregistered(UserOneTimeEntryDto dto, int count) {
+        log.info("Vytvářím jednorázové vstupy pro neregistrovaného uživatele count={}", count);
+
+        // 1) najdeme volného falešného uživatele bez platného vstupu
+        User target = null;
+        for (User u : userRepository.findByRealUserFalse()) {
+            if (userOneTimeEntryRepository.countByUserUserIDAndIsUsedFalse(u.getUserID()) == 0) {
+                target = u;
+                break;
+            }
+        }
+
+        if (target == null) {
+            User newUser = new User();
+            newUser.setFirstname("Guest");
+            newUser.setLastname("User");
+            newUser.setEmail("guest" + UUID.randomUUID() + "@example.com");
+            newUser.setRealUser(false);
+            target = userRepository.save(newUser);
+        }
+
+        // přiřazení karty
+        userService.assignCardToUser(target.getUserID(), dto.getCardNumber());
+
+        OneTimeEntry oneTime = oneTimeEntryRepository.findById(dto.getOneTimeEntryID())
+                .orElseThrow(() -> new ResourceNotFoundException("OneTimeEntry not found with id " + dto.getOneTimeEntryID()));
+
+        List<UserOneTimeEntry> created = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            UserOneTimeEntry entry = new UserOneTimeEntry();
+            entry.setUser(target);
+            entry.setOneTimeEntry(oneTime);
+            entry.setPurchaseDate(dto.getPurchaseDate());
+            entry.setIsUsed(false);
+            created.add(createUserOneTimeEntry(entry, dto.getCustomPrice()));
+        }
+
+        return created;
     }
 }
