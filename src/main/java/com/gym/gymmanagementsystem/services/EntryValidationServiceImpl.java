@@ -5,10 +5,13 @@ import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
 import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
+import com.gym.gymmanagementsystem.dto.EntryStatusMessage;
+import com.gym.gymmanagementsystem.dto.MotivationalMessage;
 import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import com.gym.gymmanagementsystem.repositories.UserSubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
     private UserOneTimeEntryRepository userOneTimeEntryRepository;
     @Autowired
     private EntryHistoryService entryHistoryService;
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Override
     public EntryValidationResult canUserEnter(Integer userId) {
@@ -47,6 +52,14 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             history.setUser(user);
             history.setEntryType("Subscription");
             entryHistoryService.createEntryHistory(history);
+            EntryStatusMessage msg = new EntryStatusMessage();
+            msg.setUserId(String.valueOf(userId));
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
+            msg.setStatus("OK_SUBSCRIPTION");
+            msg.setExpiryDate(active.getEndDate());
+            msg.setText(MotivationalMessage.randomText());
+            notifyEntryStatus(msg);
             return new EntryValidationResult(true, "Subscription");
         }
 
@@ -63,9 +76,32 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             history.setUser(user);
             history.setEntryType("OneTimeEntry");
             entryHistoryService.createEntryHistory(history);
+            long remaining = userOneTimeEntryRepository.findByUserUserID(userId)
+                    .stream()
+                    .filter(e -> !Boolean.TRUE.equals(e.getIsUsed()))
+                    .count();
+            EntryStatusMessage msg = new EntryStatusMessage();
+            msg.setFirstname(user.getFirstname());
+            msg.setLastname(user.getLastname());
+            msg.setUserId(String.valueOf(userId));
+            msg.setStatus("OK_ONE_TIME_ENTRY");
+            msg.setRemainingEntries((int) remaining);
+            msg.setText(MotivationalMessage.randomText());
+            notifyEntryStatus(msg);
             return new EntryValidationResult(true, "OneTimeEntry");
         }
 
+        EntryStatusMessage msg = new EntryStatusMessage();
+        msg.setUserId(String.valueOf(userId));
+        msg.setFirstname(user.getFirstname());
+        msg.setLastname(user.getLastname());
+        msg.setStatus("NO_VALID_ENTRY");
+        msg.setText(MotivationalMessage.randomText());
+        notifyEntryStatus(msg);
         return new EntryValidationResult(false, null);
+    }
+
+    private void notifyEntryStatus(EntryStatusMessage message) {
+        simpMessagingTemplate.convertAndSend("/topic/entry-status", message);
     }
 }
