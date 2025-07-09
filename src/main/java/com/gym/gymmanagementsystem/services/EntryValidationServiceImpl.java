@@ -6,6 +6,7 @@ import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
 import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.dto.EntryStatusMessage;
+import com.gym.gymmanagementsystem.dto.MotivationalMessage;
 import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import com.gym.gymmanagementsystem.repositories.UserSubscriptionRepository;
@@ -57,6 +58,7 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             msg.setLastname(user.getLastname());
             msg.setStatus("OK_SUBSCRIPTION");
             msg.setExpiryDate(active.getEndDate());
+            msg.setText(MotivationalMessage.randomText());
             notifyEntryStatus(msg);
             return new EntryValidationResult(true, "Subscription");
         }
@@ -84,6 +86,7 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             msg.setUserId(String.valueOf(userId));
             msg.setStatus("OK_ONE_TIME_ENTRY");
             msg.setRemainingEntries((int) remaining);
+            msg.setText(MotivationalMessage.randomText());
             notifyEntryStatus(msg);
             return new EntryValidationResult(true, "OneTimeEntry");
         }
@@ -93,6 +96,7 @@ public class EntryValidationServiceImpl implements EntryValidationService {
         msg.setFirstname(user.getFirstname());
         msg.setLastname(user.getLastname());
         msg.setStatus("NO_VALID_ENTRY");
+        msg.setText(MotivationalMessage.randomText());
         notifyEntryStatus(msg);
         return new EntryValidationResult(false, null);
     }
