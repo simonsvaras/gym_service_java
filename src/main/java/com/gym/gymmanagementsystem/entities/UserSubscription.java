@@ -21,10 +21,12 @@ public class UserSubscription {
 
     @ManyToOne
     @JoinColumn(name = "UserID", nullable = false)
+    @ToString.Exclude
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "SubscriptionID", nullable = false)
+    @ToString.Exclude
     private Subscription subscription;
 
     @Column(name = "startdate")
@@ -37,6 +39,7 @@ public class UserSubscription {
 
     // Vztah s TransactionHistory
     @OneToMany(mappedBy = "userSubscription", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<TransactionHistory> transactionHistories;
 
     // Vztah s User

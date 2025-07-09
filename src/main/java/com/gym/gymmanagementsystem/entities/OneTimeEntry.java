@@ -27,5 +27,6 @@ public class OneTimeEntry {
 
     // Vztah s UserOneTimeEntry
     @OneToMany(mappedBy = "oneTimeEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<UserOneTimeEntry> userOneTimeEntries;
 }

@@ -40,11 +40,13 @@ public class User {
     // Jedna karta na uživatele
     @OneToOne
     @JoinColumn(name = "ID_Card", unique = true)
+    @ToString.Exclude
     private Card card;
 
     // Aktivní subscription
     @OneToOne
     @JoinColumn(name = "ID_Subscription", unique = true)
+    @ToString.Exclude
     private UserSubscription activeSubscription;
 
     @Column(name="realuser")
@@ -55,14 +57,18 @@ public class User {
 
     // Vztahy
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<UserSubscription> userSubscriptions;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<UserOneTimeEntry> userOneTimeEntries;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<TransactionHistory> transactionHistories;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<EntryHistory> entryHistories;
 }
