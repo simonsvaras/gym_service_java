@@ -19,6 +19,7 @@ public class EntryHistory {
 
     @ManyToOne
     @JoinColumn(name = "UserID")
+    @ToString.Exclude
     private User user;
 
     @Column(name = "entrydate", nullable = false, updatable = false)

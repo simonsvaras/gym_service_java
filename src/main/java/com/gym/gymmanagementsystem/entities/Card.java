@@ -28,5 +28,6 @@ public class Card {
 
     // Vztah s uživatelem (jedna karta může patřit jednomu uživateli)
     @OneToOne(mappedBy = "card")
+    @ToString.Exclude
     private User user;
 }

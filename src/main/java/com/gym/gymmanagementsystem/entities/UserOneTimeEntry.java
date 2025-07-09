@@ -21,10 +21,12 @@ public class UserOneTimeEntry {
 
     @ManyToOne
     @JoinColumn(name = "UserID", nullable = false)
+    @ToString.Exclude
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "onetimeentryID", nullable = false)
+    @ToString.Exclude
     private OneTimeEntry oneTimeEntry;
 
     @Column(name = "purchasedate")
@@ -35,5 +37,6 @@ public class UserOneTimeEntry {
 
     // Vztah s TransactionHistory
     @OneToMany(mappedBy = "oneTimeEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<TransactionHistory> transactionHistories;
 }

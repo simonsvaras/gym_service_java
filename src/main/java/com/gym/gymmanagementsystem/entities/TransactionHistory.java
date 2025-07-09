@@ -19,6 +19,7 @@ public class TransactionHistory {
 
     @ManyToOne
     @JoinColumn(name = "UserID")
+    @ToString.Exclude
     private User user;
 
     @Column(name = "transactiondate", nullable = false, updatable = false)
@@ -35,9 +36,11 @@ public class TransactionHistory {
 
     @ManyToOne
     @JoinColumn(name = "usersubscriptionID")
+    @ToString.Exclude
     private UserSubscription userSubscription;
 
     @ManyToOne
     @JoinColumn(name = "onetimeentryid")
+    @ToString.Exclude
     private UserOneTimeEntry oneTimeEntry;
 }

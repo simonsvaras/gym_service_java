@@ -29,5 +29,6 @@ public class Subscription {
 
     // Vztah s UserSubscription
     @OneToMany(mappedBy = "subscription", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<UserSubscription> userSubscriptions;
 }
