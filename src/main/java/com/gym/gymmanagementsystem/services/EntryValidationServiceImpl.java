@@ -34,6 +34,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
     private EntryHistoryService entryHistoryService;
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+    @Autowired
+    private UserService userService;
 
     @Override
     public EntryValidationResult canUserEnter(Integer userId) {
@@ -71,6 +73,10 @@ public class EntryValidationServiceImpl implements EntryValidationService {
         if (oneTime != null) {
             oneTime.setIsUsed(true);
             userOneTimeEntryRepository.save(oneTime);
+
+            if (Boolean.FALSE.equals(user.getRealUser())) {
+                userService.unsignCard(user.getUserID());
+            }
 
             EntryHistory history = new EntryHistory();
             history.setUser(user);

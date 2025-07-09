@@ -28,4 +28,9 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
      */
     List<User> findByFirstnameContainingIgnoreCaseOrLastnameContainingIgnoreCase(String firstname, String lastname);
 
+    /**
+     * Vrátí všechny falešné uživatele (realUser = false).
+     */
+    List<User> findByRealUserFalse();
+
 }

@@ -56,6 +56,13 @@ public interface UserService {
     void assignCardToUser(Integer userId, String cardNumber);
 
     /**
+     * Odstraní přiřazení karty od uživatele.
+     *
+     * @param userId ID uživatele
+     */
+    void unsignCard(Integer userId);
+
+    /**
      * Vyhledá uživatele podle čísla karty.
      * <p>
      * Pokud karta s daným číslem neexistuje, vyhodí {@link com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException}.

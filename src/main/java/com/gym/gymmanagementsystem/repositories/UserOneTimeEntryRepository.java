@@ -8,4 +8,6 @@ import java.util.List;
 public interface UserOneTimeEntryRepository extends JpaRepository<UserOneTimeEntry, Integer> {
     List<UserOneTimeEntry> findByUserUserID(Integer userID);
     List<UserOneTimeEntry> findByIsUsedFalse();
+    long countByUserUserIDAndIsUsedFalse(Integer userID);
+    UserOneTimeEntry findFirstByUserUserIDAndIsUsedFalse(Integer userID);
 }

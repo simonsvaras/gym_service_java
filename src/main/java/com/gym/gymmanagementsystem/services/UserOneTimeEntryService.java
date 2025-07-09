@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.services;
 
 
 import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
+import com.gym.gymmanagementsystem.dto.UserOneTimeEntryDto;
 
 import java.math.BigDecimal;
 
@@ -16,4 +17,13 @@ public interface UserOneTimeEntryService {
     void deleteUserOneTimeEntry(Integer id);
     List<UserOneTimeEntry> findByUserId(Integer userId);
     List<UserOneTimeEntry> findUnusedEntries();
+
+    /**
+     * Vytvoří jednorázové vstupy pro neregistrovaného uživatele.
+     *
+     * @param dto   informace o vstupu včetně cardNumber
+     * @param count počet vstupů
+     * @return seznam vytvořených vstupů
+     */
+    List<UserOneTimeEntry> createEntriesForUnregistered(UserOneTimeEntryDto dto, int count);
 }
