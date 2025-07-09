@@ -1,4 +1,4 @@
-package com.gym.gymmanagementsystem.dto;
+package com.gym.gymmanagementsystem.dto.enums;
 
 import java.util.List;
 import java.util.Random;

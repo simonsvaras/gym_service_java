@@ -189,27 +189,17 @@ public class UserController {
         return ResponseEntity.ok(dto);
     }
 
+
     /**
-     * Získá uživatele podle čísla karty.
+     * Získá stav karty podle jejího čísla.
      *
      * @param cardNumber číslo karty
-     * @return ResponseEntity s UserDTO nebo varovnou zprávou, pokud karta není přiřazena
-     *
-     * @getMapping("/byCardNumber/{cardNumber}")
+     * @return HTTP 200 s CardResponse (status + případné userID)
      */
     @GetMapping("/byCardNumber/{cardNumber}")
-    public ResponseEntity<?> getUserByCardNumber(@PathVariable Integer cardNumber) {
-        log.info("GET /api/users/byCardNumber/{}", cardNumber);
-        Optional<User> userOpt = userService.findUserByCardNumber(cardNumber);
-        if (userOpt.isEmpty()) {
-            Map<String, String> body = new HashMap<>();
-            body.put("warning", "Karta není přiřazena žádnému uživateli");
-            log.warn("Karta {} není přiřazena žádnému uživateli", cardNumber);
-            return ResponseEntity.status(HttpStatus.OK).body(body);
-        }
-        UserDto dto = mapper.toDto(userOpt.get());
-        log.debug("Uživatel pro kartu {} nalezen", cardNumber);
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<CardResponse> getUserByCardNumber(@PathVariable Integer cardNumber) {
+        CardResponse response = userService.findUserByCardNumber(cardNumber);
+        return ResponseEntity.ok(response);
     }
 
     /**

@@ -2,6 +2,9 @@ package com.gym.gymmanagementsystem.services;
 
 
 import com.gym.gymmanagementsystem.FileResourceData;
+import com.gym.gymmanagementsystem.dto.CardResponse;
+import com.gym.gymmanagementsystem.dto.enums.CardStatus;
+import com.gym.gymmanagementsystem.entities.Card;
 import com.gym.gymmanagementsystem.entities.User;
 import com.gym.gymmanagementsystem.exceptions.ResourceAlreadyExistsException;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
@@ -277,12 +280,28 @@ public class UserServiceImpl implements UserService {
         log.info("Karta {} úspěšně přiřazena uživateli {}", cardNumber, userId);
     }
 
-    @Override
-    public Optional<User> findUserByCardNumber(Integer cardNumber) {
-        var card = cardRepository.findByCardNumber(cardNumber.toString())
-                .orElseThrow(() -> new ResourceNotFoundException("Karta ještě není v systému registrována."));
+    /**
+     * Najde stav karty a případně uživatele.
+     *
+     * @param cardNumber číslo karty
+     * @return CardResponse s jedním ze stavů a userID, pokud je přiřazeno
+     */
+    public CardResponse findUserByCardNumber(Integer cardNumber) {
+        // 1) Zjistíme, zda je karta v DB
+        Optional<Card> cardOpt = cardRepository.findByCardNumber(cardNumber.toString());
+        if (cardOpt.isEmpty()) {
+            return new CardResponse(CardResponse.CardStatus.NOT_REGISTERED, null);
+        }
 
-        return userRepository.findByCardCardID(card.getCardID());
+        // 2) Karta existuje, zkusíme najít uživatele
+        Integer cardId = cardOpt.get().getCardID();
+        Optional<User> userOpt = userRepository.findByCardCardID(cardId);
+        if (userOpt.isEmpty()) {
+            return new CardResponse(CardResponse.CardStatus.UNASSIGNED, null);
+        }
+
+        // 3) Karta je přiřazena uživateli
+        return new CardResponse(CardResponse.CardStatus.ASSIGNED, userOpt.get().getUserID());
     }
 
 }

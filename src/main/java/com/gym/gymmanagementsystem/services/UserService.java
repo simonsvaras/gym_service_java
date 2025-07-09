@@ -2,6 +2,7 @@ package com.gym.gymmanagementsystem.services;
 
 
 import com.gym.gymmanagementsystem.FileResourceData;
+import com.gym.gymmanagementsystem.dto.CardResponse;
 import com.gym.gymmanagementsystem.entities.User;
 import org.apache.catalina.webresources.FileResource;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,6 +64,6 @@ public interface UserService {
      * @param cardNumber číslo karty
      * @return Optional s nalezeným uživatelem nebo prázdné, pokud karta není přiřazena
      */
-    Optional<User> findUserByCardNumber(Integer cardNumber);
+    CardResponse findUserByCardNumber(Integer cardNumber);
 
 }

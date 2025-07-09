@@ -6,7 +6,7 @@ import com.gym.gymmanagementsystem.entities.UserOneTimeEntry;
 import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.dto.EntryStatusMessage;
-import com.gym.gymmanagementsystem.dto.MotivationalMessage;
+import com.gym.gymmanagementsystem.dto.enums.MotivationalMessage;
 import com.gym.gymmanagementsystem.repositories.UserOneTimeEntryRepository;
 import com.gym.gymmanagementsystem.repositories.UserRepository;
 import com.gym.gymmanagementsystem.repositories.UserSubscriptionRepository;
