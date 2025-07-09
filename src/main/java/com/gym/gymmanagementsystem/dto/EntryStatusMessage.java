@@ -23,4 +23,7 @@ public class EntryStatusMessage {
     private Integer remainingEntries;
 
     private LocalDate expiryDate;
+
+    /** Motivational text shown with the entry result. */
+    private String text;
 }
