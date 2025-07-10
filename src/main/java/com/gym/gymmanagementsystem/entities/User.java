@@ -34,6 +34,9 @@ public class User {
     @Column(name = "birthdate")
     private LocalDate birthdate;
 
+    @Column(name = "points")
+    private Integer points = 0;
+
     @Column(length = 200)
     private String profilePhoto;
 

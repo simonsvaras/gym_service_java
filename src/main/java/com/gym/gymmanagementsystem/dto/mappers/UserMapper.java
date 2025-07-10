@@ -33,6 +33,9 @@ public class UserMapper {
         user.setBirthdate(userDto.getBirthdate());
         user.setProfilePhoto(userDto.getProfilePhoto());
         user.setRealUser(userDto.getRealUser());
+        if (userDto.getPoints() != null) {
+            user.setPoints(userDto.getPoints());
+        }
 
         if (userDto.getCardID() != null) {
             Card card = cardRepository.findById(userDto.getCardID()).orElse(null);
@@ -63,6 +66,7 @@ public class UserMapper {
         dto.setBirthdate(user.getBirthdate());
         dto.setProfilePhoto(user.getProfilePhoto());
         dto.setRealUser(user.getRealUser());
+        dto.setPoints(user.getPoints());
 
         if (user.getCard() != null) {
             dto.setCardID(user.getCard().getCardID());

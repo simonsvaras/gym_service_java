@@ -291,6 +291,7 @@ public class UserController {
             dto.setFirstname(u.getFirstname());
             dto.setLastname(u.getLastname());
             dto.setEmail(u.getEmail());
+            dto.setPoints(u.getPoints());
 
             // Pokud má uživatel fotku, sestavíme URL ke stažení
             if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
