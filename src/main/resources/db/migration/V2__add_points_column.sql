@@ -1,3 +1,0 @@
-ALTER TABLE Users
-    ADD COLUMN Points INT DEFAULT 0;
-
