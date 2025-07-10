@@ -147,9 +147,23 @@ public class UserServiceImpl implements UserService {
                     throw new IllegalArgumentException("Neplatný obrazový soubor");
                 }
 
-                double quality = 0.7;
                 byte[] data;
-                do {
+                double quality = 0.9;
+                if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+                    // Komprese pouze pokud je původní soubor větší než povolený limit
+                    do {
+                        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                            Thumbnails.of(image)
+                                    .size(image.getWidth(), image.getHeight())
+                                    .outputFormat("jpg")
+                                    .outputQuality(quality)
+                                    .toOutputStream(baos);
+                            data = baos.toByteArray();
+                        }
+                        quality -= 0.1;
+                    } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
+                } else {
+                    // Jen konverze na JPG s vysokou kvalitou
                     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                         Thumbnails.of(image)
                                 .size(image.getWidth(), image.getHeight())
@@ -158,8 +172,7 @@ public class UserServiceImpl implements UserService {
                                 .toOutputStream(baos);
                         data = baos.toByteArray();
                     }
-                    quality -= 0.1;
-                } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
+                }
 
                 try (OutputStream out = Files.newOutputStream(destinationPath)) {
                     out.write(data);
