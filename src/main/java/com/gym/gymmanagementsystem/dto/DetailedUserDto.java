@@ -18,6 +18,8 @@ public class DetailedUserDto {
     private String email;
     private String profilePhotoPath; // URL ke stažení fotky, např. "/api/users/{id}/profilePhoto"
 
+    private Integer points;
+
     private List<UserSubscriptionDto> subscriptions;
 
     private List<EntryHistoryDto> entryHistories;

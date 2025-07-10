@@ -37,6 +37,8 @@ public class UserDto {
 
     private Boolean realUser = true;
 
+    private Integer points;
+
     // Vztahy mohou být reprezentovány pomocí ID nebo dalších DTO
     private Integer cardID;
     private Integer activeSubscriptionID;

@@ -54,6 +54,8 @@ public class EntryValidationServiceImpl implements EntryValidationService {
             history.setUser(user);
             history.setEntryType("Subscription");
             entryHistoryService.createEntryHistory(history);
+            user.setPoints(user.getPoints() + 1);
+            userRepository.save(user);
             EntryStatusMessage msg = new EntryStatusMessage();
             msg.setUserId(String.valueOf(userId));
             msg.setFirstname(user.getFirstname());
@@ -73,6 +75,9 @@ public class EntryValidationServiceImpl implements EntryValidationService {
         if (oneTime != null) {
             oneTime.setIsUsed(true);
             userOneTimeEntryRepository.save(oneTime);
+
+            user.setPoints(user.getPoints() + 1);
+            userRepository.save(user);
 
             if (Boolean.FALSE.equals(user.getRealUser())) {
                 userService.unsignCard(user.getUserID());
