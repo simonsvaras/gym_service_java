@@ -19,6 +19,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import net.coobird.thumbnailator.Thumbnails;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +49,8 @@ public class UserServiceImpl implements UserService {
     private CardRepository cardRepository;
     @Value("${upload.profile-photos}")
     private String uploadDir;
+
+    private static final long MAX_IMAGE_SIZE_BYTES = 500 * 1024; // 500KB
 
     @Override
     public List<User> getAllUsers() {
@@ -126,19 +134,37 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            // 2) Vygenerovat unikátní název souboru
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String uniqueFilename = UUID.randomUUID().toString() + extension;
+            // 2) Vygenerovat unikátní název souboru (ukládáme vždy jako JPG)
+            String uniqueFilename = UUID.randomUUID().toString() + ".jpg";
 
             // 3) Složit výslednou cestu
             Path destinationPath = uploadPath.resolve(uniqueFilename);
 
-            // 4) Uložit soubor na disk
-            file.transferTo(destinationPath.toFile());
+            // 4) Komprimovat a uložit soubor na disk s max velikostí 500KB
+            try (InputStream in = file.getInputStream()) {
+                BufferedImage image = ImageIO.read(in);
+                if (image == null) {
+                    throw new IllegalArgumentException("Neplatný obrazový soubor");
+                }
+
+                double quality = 0.7;
+                byte[] data;
+                do {
+                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        Thumbnails.of(image)
+                                .size(image.getWidth(), image.getHeight())
+                                .outputFormat("jpg")
+                                .outputQuality(quality)
+                                .toOutputStream(baos);
+                        data = baos.toByteArray();
+                    }
+                    quality -= 0.1;
+                } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
+
+                try (OutputStream out = Files.newOutputStream(destinationPath)) {
+                    out.write(data);
+                }
+            }
 
             // 5) Do DB (sloupec profilePhoto) uložit **relativní** cestu (nebo jen název souboru)
             user.setProfilePhoto(uniqueFilename);
