@@ -254,8 +254,8 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User " + userId + " has no profile photo set.");
         }
 
-        // 3) Složíme fyzickou cestu k souboru
-        Path filePath = Paths.get(uploadDir).resolve(photoFilename).normalize();
+        // 3) Složíme fyzickou cestu k souboru (použijeme nejkvalitnější variantu)
+        Path filePath = Paths.get(uploadDir).resolve("high_" + photoFilename).normalize();
         if (!Files.exists(filePath)) {
             throw new ResourceNotFoundException("Photo file not found: " + filePath);
         }

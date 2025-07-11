@@ -16,7 +16,8 @@ public class DetailedUserDto {
     private String firstname;
     private String lastname;
     private String email;
-    private String profilePhotoPath; // URL ke stažení fotky, např. "/api/users/{id}/profilePhoto"
+    // URL ke stažení nejkvalitnější verze profilové fotky (např. "/avatars/high_<filename>")
+    private String profilePhotoPath;
 
     private Integer points;
 

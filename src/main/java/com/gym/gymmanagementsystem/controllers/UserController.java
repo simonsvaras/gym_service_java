@@ -293,9 +293,9 @@ public class UserController {
             dto.setEmail(u.getEmail());
             dto.setPoints(u.getPoints());
 
-            // Pokud má uživatel fotku, sestavíme URL ke stažení
+            // Pokud má uživatel fotku, sestavíme URL ke stažení nejkvalitnější varianty
             if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
-                dto.setProfilePhotoPath("/api/users/" + u.getUserID() + "/profilePhoto");
+                dto.setProfilePhotoPath("/avatars/high_" + u.getProfilePhoto());
             }
 
             // Příklad: pokud máš v entitě collection subscription, mapuj je pomocí odpovídajícího mapperu
