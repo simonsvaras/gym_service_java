@@ -28,6 +28,9 @@ public class WebConfig implements WebMvcConfigurer {
         // Např. /profile-photos/** => soubory z /var/gymapp/uploads/profile-photos/
         registry.addResourceHandler("/profile-photos/**")
                 .addResourceLocations("file:" + uploadDir + "/");
+        // Nové mapování pro verze profilových fotek podle kvality
+        registry.addResourceHandler("/avatars/**")
+                .addResourceLocations("file:" + uploadDir + "/");
         // "file:" prefix říká Springu, že se jedná o souborový systém
     }
 
