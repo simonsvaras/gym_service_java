@@ -56,6 +56,10 @@ public class UserServiceImpl implements UserService {
 
     private static final long MAX_IMAGE_SIZE_BYTES = 500 * 1024; // 500KB
 
+    private static final int SIZE_LOW = 100;
+    private static final int SIZE_MEDIUM = 400;
+    private static final int SIZE_HIGH = 800;
+
     /**
      * Načte obrázek z bytového pole a aplikuje případnou rotaci podle EXIF
      * tagu Orientation. Pokud EXIF nelze přečíst, vrátí se původní obrázek.
@@ -86,6 +90,16 @@ public class UserServiceImpl implements UserService {
                 return Thumbnails.of(img).rotate(270).scale(1).asBufferedImage();
             default:
                 return img;
+        }
+    }
+
+    private void saveVariant(BufferedImage src, Path path, int size, double quality) throws IOException {
+        try (OutputStream out = Files.newOutputStream(path)) {
+            Thumbnails.of(src)
+                    .size(size, size)
+                    .outputFormat("jpg")
+                    .outputQuality(quality)
+                    .toOutputStream(out);
         }
     }
 
@@ -160,65 +174,53 @@ public class UserServiceImpl implements UserService {
             Path uploadPath = Paths.get(uploadDir);
             Files.createDirectories(uploadPath);
 
-            // případné smazání staré fotky
+            // případné smazání staré fotky (všechny varianty)
             if (user.getProfilePhoto() != null && !user.getProfilePhoto().isEmpty()) {
-                Path oldPath = uploadPath.resolve(user.getProfilePhoto());
-                log.debug("Mažu starou fotku {}", oldPath);
-                try {
-                    Files.deleteIfExists(oldPath);
-                } catch (IOException ex) {
-                    log.warn("Nepodařilo se smazat starou fotku {}: {}", oldPath, ex.getMessage());
+                String oldName = user.getProfilePhoto();
+                Path[] oldPaths = {
+                        uploadPath.resolve("high_" + oldName),
+                        uploadPath.resolve("medium_" + oldName),
+                        uploadPath.resolve("low_" + oldName)
+                };
+                for (Path oldPath : oldPaths) {
+                    log.debug("Mažu starou fotku {}", oldPath);
+                    try {
+                        Files.deleteIfExists(oldPath);
+                    } catch (IOException ex) {
+                        log.warn("Nepodařilo se smazat starou fotku {}: {}", oldPath, ex.getMessage());
+                    }
                 }
             }
 
             // 2) Vygenerovat unikátní název souboru (ukládáme vždy jako JPG)
             String uniqueFilename = UUID.randomUUID().toString() + ".jpg";
 
-            // 3) Složit výslednou cestu
-            Path destinationPath = uploadPath.resolve(uniqueFilename);
+            // 3) Složit výsledné cesty pro jednotlivé varianty
+            Path highPath = uploadPath.resolve("high_" + uniqueFilename);
+            Path mediumPath = uploadPath.resolve("medium_" + uniqueFilename);
+            Path lowPath = uploadPath.resolve("low_" + uniqueFilename);
 
             // 4) Načíst obrázek a případně jej otočit podle EXIF orientace
             byte[] fileBytes = file.getBytes();
             BufferedImage image = loadAndCorrectOrientation(fileBytes);
 
-
-            byte[] data;
-            double quality = 0.9;
-            if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-                // Komprese pouze pokud je původní soubor větší než povolený limit
-                do {
-                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                        Thumbnails.of(image)
-                                .size(image.getWidth(), image.getHeight())
-                                .outputFormat("jpg")
-                                .outputQuality(quality)
-                                .toOutputStream(baos);
-                        data = baos.toByteArray();
-                    }
-                    quality -= 0.1;
-                } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
-            } else {
-                // Jen konverze na JPG s vysokou kvalitou
-                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                    Thumbnails.of(image)
-                            .size(image.getWidth(), image.getHeight())
-                            .outputFormat("jpg")
-                            .outputQuality(quality)
-                            .toOutputStream(baos);
-                    data = baos.toByteArray();
-                }
+            // Ověření poměru stran (povolena odchylka 10 %)
+            double ratio = (double) image.getWidth() / image.getHeight();
+            if (Math.abs(ratio - 1.0) > 0.1) {
+                throw new IllegalArgumentException("Profilová fotka musí mít poměr stran 1:1");
             }
 
-            try (OutputStream out = Files.newOutputStream(destinationPath)) {
-                out.write(data);
-            }
+            // 5) Vytvoření variant
+            saveVariant(image, highPath, SIZE_HIGH, 0.9);
+            saveVariant(image, mediumPath, SIZE_MEDIUM, 0.8);
+            saveVariant(image, lowPath, SIZE_LOW, 0.6);
 
-            // 5) Do DB (sloupec profilePhoto) uložit **relativní** cestu (nebo jen název souboru)
+            // 6) Do DB (sloupec profilePhoto) uložit jen základní název
             user.setProfilePhoto(uniqueFilename);
             userRepository.save(user);
 
-            log.info("Fotka uživatele {} uložena jako {}", userId, uniqueFilename);
-            return uniqueFilename; // nebo "profile-photos/" + uniqueFilename
+            log.info("Fotka uživatele {} uložena jako {} (vytvořeny varianty)", userId, uniqueFilename);
+            return uniqueFilename; // klient si může připojit prefix varianty
 
         } catch (IOException e) {
             log.error("Chyba při ukládání fotky", e);
