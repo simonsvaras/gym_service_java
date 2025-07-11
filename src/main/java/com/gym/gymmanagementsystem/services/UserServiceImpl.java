@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import com.gym.gymmanagementsystem.dto.enums.PhotoQuality;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -243,7 +244,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public FileResourceData loadProfilePicture(Integer userId) {
+    public FileResourceData loadProfilePicture(Integer userId, PhotoQuality quality) {
         // 1) Najdeme uživatele
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
@@ -254,8 +255,9 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User " + userId + " has no profile photo set.");
         }
 
-        // 3) Složíme fyzickou cestu k souboru (použijeme nejkvalitnější variantu)
-        Path filePath = Paths.get(uploadDir).resolve("high_" + photoFilename).normalize();
+        // 3) Složíme fyzickou cestu k souboru dle zvolené kvality
+        String prefix = (quality != null ? quality.prefix() : PhotoQuality.HIGH.prefix());
+        Path filePath = Paths.get(uploadDir).resolve(prefix + photoFilename).normalize();
         if (!Files.exists(filePath)) {
             throw new ResourceNotFoundException("Photo file not found: " + filePath);
         }

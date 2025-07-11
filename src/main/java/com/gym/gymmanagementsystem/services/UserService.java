@@ -7,6 +7,7 @@ import com.gym.gymmanagementsystem.entities.User;
 import org.apache.catalina.webresources.FileResource;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
+import com.gym.gymmanagementsystem.dto.enums.PhotoQuality;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,12 +24,13 @@ public interface UserService {
 
     List<User> searchUsers(String searchTerm);
     /**
-     * Načte profilovou fotku daného uživatele jako Resource.
+     * Načte profilovou fotku daného uživatele jako {@link org.springframework.core.io.Resource}.
      *
-     * @param userId ID uživatele
+     * @param userId  ID uživatele
+     * @param quality požadovaná kvalita fotografie (LOW, MEDIUM, HIGH)
      * @return FileResourceData (s Resource a contentType), nebo vyhodí výjimku, pokud fotka neexistuje
      */
-    FileResourceData loadProfilePicture(Integer userId);
+    FileResourceData loadProfilePicture(Integer userId, PhotoQuality quality);
 
 
     /**
