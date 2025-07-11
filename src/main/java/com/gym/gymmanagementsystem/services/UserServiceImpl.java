@@ -20,6 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import net.coobird.thumbnailator.Thumbnails;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifIFD0Directory;
+import java.io.ByteArrayInputStream;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.InputStream;
@@ -51,6 +55,39 @@ public class UserServiceImpl implements UserService {
     private String uploadDir;
 
     private static final long MAX_IMAGE_SIZE_BYTES = 500 * 1024; // 500KB
+
+    /**
+     * Načte obrázek z bytového pole a aplikuje případnou rotaci podle EXIF
+     * tagu Orientation. Pokud EXIF nelze přečíst, vrátí se původní obrázek.
+     */
+    private BufferedImage loadAndCorrectOrientation(byte[] bytes) throws IOException {
+        int orientation = 1;
+        try {
+            Metadata metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(bytes));
+            ExifIFD0Directory dir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+            if (dir != null && dir.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                orientation = dir.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+            }
+        } catch (Exception ex) {
+            log.debug("Nepodařilo se načíst EXIF data: {}", ex.getMessage());
+        }
+
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(bytes));
+        if (img == null) {
+            throw new IllegalArgumentException("Neplatný obrazový soubor");
+        }
+
+        switch (orientation) {
+            case 6:
+                return Thumbnails.of(img).rotate(90).scale(1).asBufferedImage();
+            case 3:
+                return Thumbnails.of(img).rotate(180).scale(1).asBufferedImage();
+            case 8:
+                return Thumbnails.of(img).rotate(270).scale(1).asBufferedImage();
+            default:
+                return img;
+        }
+    }
 
     @Override
     public List<User> getAllUsers() {
@@ -140,30 +177,16 @@ public class UserServiceImpl implements UserService {
             // 3) Složit výslednou cestu
             Path destinationPath = uploadPath.resolve(uniqueFilename);
 
-            // 4) Komprimovat a uložit soubor na disk s max velikostí 500KB
-            try (InputStream in = file.getInputStream()) {
-                BufferedImage image = ImageIO.read(in);
-                if (image == null) {
-                    throw new IllegalArgumentException("Neplatný obrazový soubor");
-                }
+            // 4) Načíst obrázek a případně jej otočit podle EXIF orientace
+            byte[] fileBytes = file.getBytes();
+            BufferedImage image = loadAndCorrectOrientation(fileBytes);
 
-                byte[] data;
-                double quality = 0.9;
-                if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-                    // Komprese pouze pokud je původní soubor větší než povolený limit
-                    do {
-                        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                            Thumbnails.of(image)
-                                    .size(image.getWidth(), image.getHeight())
-                                    .outputFormat("jpg")
-                                    .outputQuality(quality)
-                                    .toOutputStream(baos);
-                            data = baos.toByteArray();
-                        }
-                        quality -= 0.1;
-                    } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
-                } else {
-                    // Jen konverze na JPG s vysokou kvalitou
+
+            byte[] data;
+            double quality = 0.9;
+            if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+                // Komprese pouze pokud je původní soubor větší než povolený limit
+                do {
                     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                         Thumbnails.of(image)
                                 .size(image.getWidth(), image.getHeight())
@@ -172,11 +195,22 @@ public class UserServiceImpl implements UserService {
                                 .toOutputStream(baos);
                         data = baos.toByteArray();
                     }
+                    quality -= 0.1;
+                } while (data.length > MAX_IMAGE_SIZE_BYTES && quality >= 0.1);
+            } else {
+                // Jen konverze na JPG s vysokou kvalitou
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    Thumbnails.of(image)
+                            .size(image.getWidth(), image.getHeight())
+                            .outputFormat("jpg")
+                            .outputQuality(quality)
+                            .toOutputStream(baos);
+                    data = baos.toByteArray();
                 }
+            }
 
-                try (OutputStream out = Files.newOutputStream(destinationPath)) {
-                    out.write(data);
-                }
+            try (OutputStream out = Files.newOutputStream(destinationPath)) {
+                out.write(data);
             }
 
             // 5) Do DB (sloupec profilePhoto) uložit **relativní** cestu (nebo jen název souboru)

@@ -36,6 +36,9 @@ dependencies {
         // Knihovna pro kompresi obrazků
         implementation 'net.coobird:thumbnailator:0.4.20'
 
+        // Knihovna pro čtení EXIF metadat (orientace obrázku)
+        implementation 'com.drewnoakes:metadata-extractor:2.18.0'
+
 
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
