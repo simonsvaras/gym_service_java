@@ -294,11 +294,7 @@ public class UserController {
             dto.setLastname(u.getLastname());
             dto.setEmail(u.getEmail());
             dto.setPoints(u.getPoints());
-
-            // Pokud má uživatel fotku, sestavíme základní URL pro stažení
-            if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
-                dto.setProfilePhotoPath("/api/users/" + u.getUserID() + "/profilePhoto");
-            }
+            dto.setProfilePhotoPath(u.getProfilePhoto());
 
             // Příklad: pokud máš v entitě collection subscription, mapuj je pomocí odpovídajícího mapperu
             List<UserSubscriptionDto> subscriptionDtos = u.getUserSubscriptions().stream()
