@@ -13,6 +13,7 @@ import com.gym.gymmanagementsystem.entities.UserSubscription;
 import com.gym.gymmanagementsystem.exceptions.ResourceNotFoundException;
 import com.gym.gymmanagementsystem.services.EntryHistoryService;
 import com.gym.gymmanagementsystem.services.UserService;
+import com.gym.gymmanagementsystem.dto.enums.PhotoQuality;
 import com.gym.gymmanagementsystem.services.UserSubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -222,9 +223,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}/profilePhoto")
-    public ResponseEntity<Resource> getProfilePhoto(@PathVariable Integer id) {
-        log.info("GET /api/users/{}/profilePhoto", id);
-        FileResourceData fileData = userService.loadProfilePicture(id);
+    public ResponseEntity<Resource> getProfilePhoto(@PathVariable Integer id,
+                                                    @RequestParam(value = "quality", defaultValue = "HIGH") PhotoQuality quality) {
+        log.info("GET /api/users/{}/profilePhoto quality={}", id, quality);
+        FileResourceData fileData = userService.loadProfilePicture(id, quality);
 
         log.debug("Profilová fotka {} načtena", fileData.getResource().getFilename());
 
@@ -293,9 +295,9 @@ public class UserController {
             dto.setEmail(u.getEmail());
             dto.setPoints(u.getPoints());
 
-            // Pokud má uživatel fotku, sestavíme URL ke stažení nejkvalitnější varianty
+            // Pokud má uživatel fotku, sestavíme základní URL pro stažení
             if (u.getProfilePhoto() != null && !u.getProfilePhoto().isEmpty()) {
-                dto.setProfilePhotoPath("/avatars/high_" + u.getProfilePhoto());
+                dto.setProfilePhotoPath("/api/users/" + u.getUserID() + "/profilePhoto");
             }
 
             // Příklad: pokud máš v entitě collection subscription, mapuj je pomocí odpovídajícího mapperu

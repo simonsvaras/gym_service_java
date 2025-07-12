@@ -16,7 +16,7 @@ public class DetailedUserDto {
     private String firstname;
     private String lastname;
     private String email;
-    // URL ke stažení nejkvalitnější verze profilové fotky (např. "/avatars/high_<filename>")
+    // Základní URL pro stažení profilové fotky. Kvalitu lze určit pomocí parametru "quality".
     private String profilePhotoPath;
 
     private Integer points;
