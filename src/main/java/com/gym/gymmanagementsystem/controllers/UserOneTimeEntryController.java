@@ -134,7 +134,7 @@ public class UserOneTimeEntryController {
             @RequestParam(value = "count", defaultValue = "1") int count) {
         log.info("POST /api/user-one-time-entries/unregistered count={} - {}", count, userOneTimeEntryDto);
 
-        if (userOneTimeEntryDto.getCardNumber() == null || userOneTimeEntryDto.getCardNumber().isEmpty()) {
+        if (userOneTimeEntryDto.getCardNumber() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cardNumber je povinné");
         }
 

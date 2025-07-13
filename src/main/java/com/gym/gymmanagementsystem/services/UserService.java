@@ -55,7 +55,7 @@ public interface UserService {
      * @param userId     ID of the user to whom the card should be assigned
      * @param cardNumber number of the card
      */
-    void assignCardToUser(Integer userId, String cardNumber);
+    void assignCardToUser(Integer userId, Long cardNumber);
 
     /**
      * Odstraní přiřazení karty od uživatele.
@@ -73,6 +73,6 @@ public interface UserService {
      * @param cardNumber číslo karty
      * @return Optional s nalezeným uživatelem nebo prázdné, pokud karta není přiřazena
      */
-    CardResponse findUserByCardNumber(Integer cardNumber);
+    CardResponse findUserByCardNumber(Long cardNumber);
 
 }

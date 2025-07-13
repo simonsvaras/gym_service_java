@@ -1,6 +1,6 @@
 package com.gym.gymmanagementsystem.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 public class AssignCardRequest {
-    @NotBlank(message = "Card number je povinný")
-    private String cardNumber;
+    @NotNull(message = "Card number je povinný")
+    private Long cardNumber;
 }

@@ -198,7 +198,7 @@ public class UserController {
      * @return HTTP 200 s CardResponse (status + případné userID)
      */
     @GetMapping("/byCardNumber/{cardNumber}")
-    public ResponseEntity<CardResponse> getUserByCardNumber(@PathVariable Integer cardNumber) {
+    public ResponseEntity<CardResponse> getUserByCardNumber(@PathVariable Long cardNumber) {
         CardResponse response = userService.findUserByCardNumber(cardNumber);
         return ResponseEntity.ok(response);
     }
