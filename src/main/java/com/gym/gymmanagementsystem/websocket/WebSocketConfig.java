@@ -19,7 +19,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-entry")
-                .setAllowedOrigins("*")
+                // Allow all origins for development purposes. When credentials
+                // are required, "allowedOrigins" cannot be "*" so we use
+                // "allowedOriginPatterns" instead.
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 }
