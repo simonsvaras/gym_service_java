@@ -17,8 +17,8 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer cardID;
 
-    @Column(name = "cardnumber",length = 50, unique = true, nullable = false)
-    private String cardNumber;
+    @Column(name = "cardnumber", unique = true, nullable = false)
+    private Long cardNumber;
 
     @Column(name = "lost")
     private Boolean lost;

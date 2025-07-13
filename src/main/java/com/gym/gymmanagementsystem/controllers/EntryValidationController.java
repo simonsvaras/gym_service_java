@@ -47,7 +47,7 @@ public class EntryValidationController {
      * Ověří vstup na základě čísla karty.
      */
     @GetMapping("/validateEntryByCardNumber/{cardNumber}")
-    public ResponseEntity<EntryValidationResult> validateByCard(@PathVariable String cardNumber) {
+    public ResponseEntity<EntryValidationResult> validateByCard(@PathVariable Long cardNumber) {
         Card card = cardService.findByCardNumber(cardNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with number " + cardNumber));
         User user = card.getUser();

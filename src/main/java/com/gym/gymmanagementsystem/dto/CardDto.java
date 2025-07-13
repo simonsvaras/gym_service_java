@@ -1,6 +1,6 @@
 package com.gym.gymmanagementsystem.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -9,9 +9,8 @@ public class CardDto {
 
     private Integer cardID;
 
-    @NotBlank(message = "Card number je povinný")
-    @Size(max = 50, message = "Card number může mít maximálně 50 znaků")
-    private String cardNumber;
+    @NotNull(message = "Card number je povinný")
+    private Long cardNumber;
 
     private Boolean lost;
 

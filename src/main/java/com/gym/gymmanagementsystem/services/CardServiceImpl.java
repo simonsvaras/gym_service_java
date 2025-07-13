@@ -65,7 +65,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Optional<Card> findByCardNumber(String cardNumber) {
+    public Optional<Card> findByCardNumber(Long cardNumber) {
         log.info("Hledám kartu dle čísla {}", cardNumber);
         return cardRepository.findByCardNumber(cardNumber);
     }

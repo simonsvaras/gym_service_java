@@ -332,7 +332,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void assignCardToUser(Integer userId, String cardNumber) {
+    public void assignCardToUser(Integer userId, Long cardNumber) {
         log.info("Přiřazuji kartu {} uživateli {}", cardNumber, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
@@ -382,9 +382,9 @@ public class UserServiceImpl implements UserService {
      * @param cardNumber číslo karty
      * @return CardResponse s jedním ze stavů a userID, pokud je přiřazeno
      */
-    public CardResponse findUserByCardNumber(Integer cardNumber) {
+    public CardResponse findUserByCardNumber(Long cardNumber) {
         // 1) Zjistíme, zda je karta v DB
-        Optional<Card> cardOpt = cardRepository.findByCardNumber(cardNumber.toString());
+        Optional<Card> cardOpt = cardRepository.findByCardNumber(cardNumber);
         if (cardOpt.isEmpty()) {
             return new CardResponse(CardResponse.CardStatus.NOT_REGISTERED, null);
         }

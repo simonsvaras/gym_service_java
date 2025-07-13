@@ -141,7 +141,7 @@ public class CardController {
      * @getMapping("/byNumber/{cardNumber}")
      */
     @GetMapping("/byNumber/{cardNumber}")
-    public ResponseEntity<CardDto> getCardByNumber(@PathVariable String cardNumber) {
+    public ResponseEntity<CardDto> getCardByNumber(@PathVariable Long cardNumber) {
         log.info("GET /api/cards/byNumber/{}", cardNumber);
         Card card = cardService.findByCardNumber(cardNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Karta nenalezena s číslem " + cardNumber));

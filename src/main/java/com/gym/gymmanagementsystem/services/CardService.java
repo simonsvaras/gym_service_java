@@ -12,5 +12,5 @@ public interface CardService {
     Card createCard(Card card);
     Card updateCard(Integer id, Card cardDetails);
     void deleteCard(Integer id);
-    Optional<Card> findByCardNumber(String cardNumber);
+    Optional<Card> findByCardNumber(Long cardNumber);
 }
